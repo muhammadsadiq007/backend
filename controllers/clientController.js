@@ -183,6 +183,7 @@ export const addClients = async (req, res) => {
       packageId,
       inscharges,
       insdate,
+      balance,
       rechargedate,
       status,
       network_name,
@@ -207,6 +208,7 @@ export const addClients = async (req, res) => {
       packageId,
       inscharges,
       insdate,
+      balance,
       rechargedate,
       status,
     });

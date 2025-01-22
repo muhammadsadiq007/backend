@@ -5,7 +5,6 @@ import packageRouter from './routes/package.js'
 import employeeRouter from './routes/employee.js'
 import clientRouter from './routes/client.js'
 import salaryRouter from './routes/salary.js'
-import leaveRouter from './routes/leave.js'
 import settingRouter from './routes/setting.js'
 import networkRouter from './routes/network.js'
 import subAreaRouter from './routes/subarea.js'
@@ -13,7 +12,7 @@ import collectionRouter from './routes/collection.js'
 import connectToDatabase from "./db/db.js"
 import dashboardRouter from "./routes/dashboard.js"
 import expenseRouter from "./routes/expense.js"
-import cron from "node-cron"
+// import cron from "node-cron"
 // import { clientScheduler } from "./controllers/schedulerController.js"
 
 // cron.schedule(' 0 0 * * *',() => {
@@ -30,7 +29,6 @@ app.use('/api/package', packageRouter)
 app.use('/api/employee', employeeRouter)
 app.use('/api/client', clientRouter)
 app.use('/api/salary', salaryRouter)
-app.use('/api/leave', leaveRouter)
 app.use('/api/setting', settingRouter)
 app.use('/api/network', networkRouter)
 app.use('/api/subarea', subAreaRouter)

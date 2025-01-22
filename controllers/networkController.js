@@ -1,6 +1,20 @@
 import User from "../models/User.js";
 import crypto from "crypto";
 
+export const getNetworkData = async (req, res) => {
+
+  try {
+    const {id} = req.params
+    const data = await User.findOne({_id: id})
+    
+    return res.status(200).json({ success: true, networkData : data });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, error: "Somthing is wrong with server" });
+  }
+};
+
 
 export const addNetwork = async (req, res) => {
   try {
@@ -43,6 +57,48 @@ export const addNetwork = async (req, res) => {
     return res
       .status(500)
       .json({ success: false, error: "Cant Add Network server error" });
+  }
+};
+
+export const editNetworkPassword = async (req, res) => {
+  try {
+    const {id} = req.params
+    const {
+      password,
+    } = req.body;
+    const hashPassword = crypto
+      .createHash("sha256")
+      .update(password)
+      .digest("hex"); 
+
+    const newUser = User.findByIdAndUpdate({_id:id},{
+      password: hashPassword,
+    });
+    return res.status(200).json({ success: true, message: "Password Changed Successfully" });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, error: "Somthing is Wrong with server" });
+  }
+};
+
+export const editNetworkPermission = async (req, res) => {
+  try {
+    const {id} = req.params
+    const {
+      permissions,
+    } = req.body;
+
+    const newUser = User.findByIdAndUpdate({_id:id},{
+      permissions: permissions,
+    });
+    console.log(newUser)
+    return res.status(200).json({ success: true, message: `Permission Changed Successfully Count ${newUser.modifiedCount}` });
+  } catch (error) {
+    console.log(error)
+    return res
+      .status(500)
+      .json({ success: false, error: "Somthing is Wrong with server" });
   }
 };
 

@@ -5,7 +5,7 @@ import { addClients, editClient, getClient, getClients, activateClient, deactiva
 const router = express.Router();
 
 router.get("/", authMiddleware, getClients);
-router.get("/:id", authMiddleware, getClient);
+router.get("/:id", authMiddleware, getClient); 
 router.patch("/:id", authMiddleware, editClient);
 router.post("/add", authMiddleware, addClients);
 router.patch("/activate/:id", authMiddleware, activateClient);

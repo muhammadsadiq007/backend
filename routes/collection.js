@@ -10,4 +10,6 @@ router.get("/:id", authMiddleware, getCollection);
 // router.get("status/:id", authMiddleware, getStatus);
 router.patch("/:id", authMiddleware, editStatus);
 router.get("/legder/:id", authMiddleware, getLegder);
+
+
 export default router; 
