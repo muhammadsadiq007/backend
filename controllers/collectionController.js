@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import subareaSchema from "../models/SubArea.js";
 import clientSchema from "../models/Clients.js";
 
-export const editStatus = async (req, res) => {
+export const statusUnpaid = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
@@ -27,6 +27,41 @@ export const editStatus = async (req, res) => {
     const updclient = await Client.findByIdAndUpdate({_id: clientId},{
       balance: - parseInt(monthly),
       ispaid : 'Unpaid',
+      rechargedate: nextMonth,
+    })
+
+    return res.status(200).json({ success: true, message: "successfully change"});
+  } catch (error) {
+    console.log(error)
+    return res
+      .status(500)
+      .json({ success: false, error: "get client server error" });
+  }
+};
+
+export const statusPaid = async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_KEY);
+  const network_name = decoded.networkname;
+  const { id } = req.params;
+  const  {status ,rechargedate,clientId, monthly }  = req.body;
+  try {
+    const Collection = mongoose.model(
+      network_name + "_collection",
+      collectionSchema
+    );
+    const legder = await Collection.findByIdAndUpdate(
+      { _id: id },
+      {
+        status: status,
+      }
+    )
+    const today = new Date(rechargedate)
+    const nextMonth = new Date(today.getFullYear(), today.getMonth()+1,10)
+    const Client = mongoose.model(network_name + "_client", clientSchema);
+    const updclient = await Client.findByIdAndUpdate({_id: clientId},{
+      balance: + parseInt(monthly),
+      ispaid : 'Paid',
       rechargedate: nextMonth,
     })
 
@@ -75,8 +110,8 @@ export const getCollection = async (req, res) => {
     const SubArea = mongoose.model(network_name + "_subarea", subareaSchema);
     const Client = mongoose.model(network_name + "_client", clientSchema);
     const collection = await Collection.findById(id)
-      .populate({ path: "subareaId", model: network_name + "_subarea" })
-      .populate({ path: "clientId", model: network_name + "_client" });
+      .populate({ path: "subareaId", model: SubArea })
+      .populate({ path: "clientId", model: Client });
     return res.status(200).json({ success: true, collection });
   } catch (error) {
     return res
@@ -94,7 +129,8 @@ export const getCollections = async (req, res) => {
       network_name + "_collection",
       collectionSchema
     );
-    const clientsCollection = await Collection.find().sort({createdAt : -1});
+    const Client = mongoose.model(network_name + "_client", clientSchema);
+    const clientsCollection = await Collection.find().sort({createdAt : -1}).populate({ path: "clientId", select: "rechargedate", model: Client });
     return res.status(200).json({ success: true, clientsCollection });
   } catch (error) {
     return res

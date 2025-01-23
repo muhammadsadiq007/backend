@@ -41,21 +41,6 @@ export const getEmployee = async (req, res) => {
   }
 };
 
-export const EmployeeByDepId = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const employees = await Employee.find({ emp_department: id })
-      .populate("userId", { password: 0 })
-      .populate("emp_department");
-    return res
-      .status(200)
-      .json({ success: true, employees, message: "All Ok" });
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ success: false, error: "get employee server error" });
-  }
-};
 
 export const editEmployee = async (req, res) => {
   try {

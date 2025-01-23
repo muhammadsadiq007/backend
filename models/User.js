@@ -6,7 +6,15 @@ const userSchema = new mongoose.Schema({
     email: {type: String, unique:true ,required:true},
     password: {type: String,required:true},
     role: {type: String, enum: ["master", "admin", "employee"], required:true},
-    permissions: [{type: String}],
+    permissions: {
+        addclient: {type: Number, default: 0},
+        editclient: {type: Number, default: 0},
+        changepaydate: {type: Number, default: 0},
+        changestatus:{type: Number, default: 0},
+        clientlegder:{type: Number, default: 0},
+        clientpayments:{type: Number, default: 0},
+        paymentstatus:{type: Number, default: 0}
+    },
     createAt: {type: Date, default: Date.now},
     updatedAt: {type: Date, default: Date.now},
 })

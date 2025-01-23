@@ -2,19 +2,17 @@ import User from "../models/User.js";
 import crypto from "crypto";
 
 export const getNetworkData = async (req, res) => {
-
   try {
-    const {id} = req.params
-    const data = await User.findOne({_id: id})
-    
-    return res.status(200).json({ success: true, networkData : data });
+    const { id } = req.params;
+    const data = await User.findOne({ _id: id }, {permissions:1});
+
+    return res.status(200).json({ success: true, networkData: data });
   } catch (error) {
     return res
       .status(500)
       .json({ success: false, error: "Somthing is wrong with server" });
   }
 };
-
 
 export const addNetwork = async (req, res) => {
   try {
@@ -38,7 +36,7 @@ export const addNetwork = async (req, res) => {
         .status(400)
         .json({ success: false, error: "User Already Exists!" });
     }
-    
+
     const hashPassword = crypto
       .createHash("sha256")
       .update(net_admin_password)
@@ -62,19 +60,22 @@ export const addNetwork = async (req, res) => {
 
 export const editNetworkPassword = async (req, res) => {
   try {
-    const {id} = req.params
-    const {
-      password,
-    } = req.body;
+    const { id } = req.params;
+    const { password } = req.body;
     const hashPassword = crypto
       .createHash("sha256")
       .update(password)
-      .digest("hex"); 
+      .digest("hex");
 
-    const newUser = User.findByIdAndUpdate({_id:id},{
-      password: hashPassword,
-    });
-    return res.status(200).json({ success: true, message: "Password Changed Successfully" });
+    const newUser = User.findByIdAndUpdate(
+      { _id: id },
+      {
+        password: hashPassword,
+      }
+    );
+    return res
+      .status(200)
+      .json({ success: true, message: "Password Changed Successfully" });
   } catch (error) {
     return res
       .status(500)
@@ -83,28 +84,49 @@ export const editNetworkPassword = async (req, res) => {
 };
 
 export const editNetworkPermission = async (req, res) => {
-  try {
-    const {id} = req.params
-    const {
-      permissions,
-    } = req.body;
+  const { id } = req.params;
+  const { permissions } = req.body;
 
-    const newUser = User.findByIdAndUpdate({_id:id},{
-      permissions: permissions,
+  console.log("User ID:", id);
+  console.log("Permissions Object:", permissions);
+
+  try {
+    // Validate permissions
+    if (!permissions || typeof permissions !== "object" || Object.keys(permissions).length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid Permission Object" });
+    }
+
+    // Find and update user
+    const updatedUser = await User.findByIdAndUpdate(
+      id, // Find by ID
+      { permissions }, // Update permissions
+      { new: true } // Return updated document
+    );
+
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ success: false, error: "User Not Found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Permissions updated successfully.",
+      data: updatedUser, // Send updated user as response (optional)
     });
-    console.log(newUser)
-    return res.status(200).json({ success: true, message: `Permission Changed Successfully Count ${newUser.modifiedCount}` });
   } catch (error) {
-    console.log(error)
+    console.error("Error while updating permissions:", error);
     return res
       .status(500)
-      .json({ success: false, error: "Somthing is Wrong with server" });
-  }
+      .json({ success: false, error: "Something went wrong with the server" });
+  }
 };
 
-export const getNetworks = async (req, res) => {;
+export const getNetworks = async (req, res) => {
   try {
-    const user = await User.find({role: 'admin'})
+    const user = await User.find({ role: "admin" });
     // const user = await User.find({password:0})
     return res.status(200).json({ success: true, user });
   } catch (error) {

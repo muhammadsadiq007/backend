@@ -19,7 +19,7 @@ export const login = async (req, res) => {
 
     if (user.password === hashPassword) {
       const token = jwt.sign(
-        { _id: user._id, role: user.role, networkname :user.networkname },
+        { _id: user._id, role: user.role, networkname :user.networkname, permissions: user.permissions },
         process.env.JWT_KEY,
         { expiresIn: "1d" }
 
@@ -27,7 +27,7 @@ export const login = async (req, res) => {
       res.status(200).json({
         success: true,
         token,
-        user: { _id: user._id, name: user.name, role: user.role, networkname :user.networkname },
+        user: { _id: user._id, name: user.name, role: user.role, networkname :user.networkname, permissions: user.permissions },
       });
     }
    
