@@ -24,6 +24,7 @@ const collectionSchema = new mongoose.Schema(
     subareaId: { type: Schema.Types.ObjectId, ref: global.network_name + "_subarea", required: true },
     paidby: { type: String, required: true },
     monthly: { type: Number, required: true },
+    balance: { type: Number, default: 0 },
     status : {type : String, default: "Paid"},
     paymentmethod: { type: String, default: "Cash" },
     paymentdate: { type: Date, default: Date.now },

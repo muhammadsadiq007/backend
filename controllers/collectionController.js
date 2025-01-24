@@ -32,7 +32,6 @@ export const statusUnpaid = async (req, res) => {
 
     return res.status(200).json({ success: true, message: "successfully change"});
   } catch (error) {
-    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "get client server error" });
@@ -67,7 +66,6 @@ export const statusPaid = async (req, res) => {
 
     return res.status(200).json({ success: true, message: "successfully change"});
   } catch (error) {
-    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "get client server error" });
@@ -152,6 +150,7 @@ export const addCollection = async (req, res) => {
       address,
       packageId,
       monthly,
+      recamount,
       paymethod,
       month,
       year,
@@ -164,8 +163,7 @@ export const addCollection = async (req, res) => {
     } = req.body;
     
 
-      const totalBalance = parseInt(balance) + parseInt(fixedmonthly) - parseInt(monthly)
-    
+      const totalBalance = parseInt(recamount) - parseInt(monthly) + parseInt(balance)
     const Collection = mongoose.model(
       network_name + "_collection",
       collectionSchema
@@ -192,8 +190,9 @@ export const addCollection = async (req, res) => {
       month,
       year,
       paymentdate, 
-      subareaId,
+      subareaId, 
       paidby,
+      balance,
     });
      await newPay.save();
      const updclient = await Client.findByIdAndUpdate({_id: id},{
@@ -206,7 +205,6 @@ export const addCollection = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Payment Added Successfully" });
   } catch (error) {
-    console.log(error)
     return res.status(500).json({
       success: false,
       error: "Can't Add Client Payment Server Error",

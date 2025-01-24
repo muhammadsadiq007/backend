@@ -25,10 +25,8 @@ export const clientScheduler = async() => {
             },
                 { $set:{status : 'In-Active'}}
         )
-        console.log(result.modifiedCount)
-        console.log("Job Completed Successfully!")
         }
     } catch (error) {
-        console.log(`Error running`,error)
+       
     }
 }

@@ -87,9 +87,7 @@ export const editNetworkPermission = async (req, res) => {
   const { id } = req.params;
   const { permissions } = req.body;
 
-  console.log("User ID:", id);
-  console.log("Permissions Object:", permissions);
-
+  
   try {
     // Validate permissions
     if (!permissions || typeof permissions !== "object" || Object.keys(permissions).length === 0) {
@@ -117,7 +115,6 @@ export const editNetworkPermission = async (req, res) => {
       data: updatedUser, // Send updated user as response (optional)
     });
   } catch (error) {
-    console.error("Error while updating permissions:", error);
     return res
       .status(500)
       .json({ success: false, error: "Something went wrong with the server" });

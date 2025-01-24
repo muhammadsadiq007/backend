@@ -15,14 +15,12 @@ export const addExpense = async (req, res) => {
       details,
       expensebyId: expenseby,
     });
-    console.log(newExp)
     await newExp.save();
     return res.status(200).json({
       success: true,
       message: "Expense Added Successfully",
     });
   } catch (error) {
-    console.log(error)
     return res.status(500).json({
       success: false,
       error: "There is somthing wrong contact admin",

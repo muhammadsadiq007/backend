@@ -6,23 +6,19 @@ const verifyUser = async (req, res, next) => {
     const token = req.headers.authorization.split(" ")[1];
     // if (!token) {
     //   const token = req.headers.authorization.split(" ")[0];
-    //   console.log(token)
     //  }
      if(!token) {
       return res.status(404).json({ success: false, error: "Token Not Found" });
     }
     const decoded = jwt.verify(token, process.env.JWT_KEY);
-    // console.log(decoded)
     if (!decoded) {
       return res.status(404).json({ success: false, error: "Token Not Valid" });
     }
     const user = await User.findById({ _id: decoded._id }).select("-password");
-    // console.log(user)
     if (!user) {
       return res.status(404).json({ success: false, error: "User Not Found" });
     }
     if(user) {
-      // console.log(user)
     req.user = user;
     return next();
     }
