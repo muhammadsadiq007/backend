@@ -72,9 +72,16 @@ export const getDashboard = async (req, res) => {
       .populate("paidby")
     .limit(10).sort({createdAt : -1});
 
+    const parsedDate = new Date()
+    // const year = parsedDate.getUTCFullYear()
+    const years = parsedDate.getFullYear()
+    const months = parsedDate.getMonth()
+    
+    const startDate = new Date(years, months, 1).toLocaleString()
+    const endDate = new Date(years, months + 1, 1).toLocaleString()
     const totalCollection = await Collection.aggregate([
-      { $match: { month: month, status: "Paid" } },
-      { $group: { _id: { month: month }, totalAmount: { $sum: "$monthly" } } },
+      { $match: { paymentdate : {$gte : new Date(startDate), $lt : new Date(endDate)}, status: "Paid"} },
+      { $group: { _id: null, totalAmount: { $sum: "$monthly" } } }, 
     ]);
 
     return res.status(200).json({
@@ -84,7 +91,6 @@ export const getDashboard = async (req, res) => {
       packageCount,
       unpaidClients,
       clientsCollection ,
-      packageCount,
       totalAmount: totalCollection[0]?.totalAmount || 0,
     });
   } catch (error) {

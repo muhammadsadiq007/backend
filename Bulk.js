@@ -3700,8 +3700,6 @@ const userRegister = async () => {
             "rechargedate": "2/10/2025"
         }
     ]
-    
-
      
     // const newUser = new User({
     //     name: "Muhammad Sadiq",
@@ -3725,4 +3723,4 @@ const userRegister = async () => {
   }
 };
 
-userRegister();
+userRegister()

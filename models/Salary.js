@@ -26,8 +26,8 @@ const salarySchema = new mongoose.Schema({
   addedbyId: { type: Schema.Types.ObjectId,
     ref: "user",
     required: true, },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
 },{
   strictPopulate: false
 } );

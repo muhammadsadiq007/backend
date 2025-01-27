@@ -12,6 +12,7 @@ import collectionRouter from './routes/collection.js'
 import connectToDatabase from "./db/db.js"
 import dashboardRouter from "./routes/dashboard.js"
 import expenseRouter from "./routes/expense.js"
+import reportsRouter from "./routes/reports.js"
 // import cron from "node-cron"
 // import { clientScheduler } from "./controllers/schedulerController.js"
 
@@ -35,6 +36,7 @@ app.use('/api/subarea', subAreaRouter)
 app.use('/api/collection', collectionRouter)
 app.use('/api/dashboard', dashboardRouter)
 app.use('/api/expense', expenseRouter)
+app.use('/api/reports', reportsRouter)
 
 app.listen(process.env.PORT, () => {
     console.log(`Server is running at Port No ${process.env.PORT}`)
