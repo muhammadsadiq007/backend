@@ -30,7 +30,7 @@ const collectionSchema = new mongoose.Schema(
     monthspaid: { type: Number, default: 0 },
     entries: [
       {
-        month: {type : String, required: true},
+        month: {type : String},
         _id: false,
       },
       

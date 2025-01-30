@@ -3709,12 +3709,16 @@ const userRegister = async () => {
     // })
     const option = { ordered: true };
     const today = new Date()
-    const nextMonth = new Date(today.getFullYear(), today.getMonth()+1,10).toLocaleDateString()
+    const nextMonth = new Date(today.getFullYear(), today.getMonth(),10).toLocaleDateString()
     console.log(nextMonth)
 
     const Client = mongoose.model("heefa_client", clientSchema);    
-    const result = await Client.updateMany({ispaid: "Paid" },
-      { rechargedate: nextMonth}
+    const result = await Client.updateMany(
+      { rechargedate: nextMonth,
+        balance: 0,
+        ispaid: "Unpaid",
+        status: "In-Active"
+      }
     );
 
     console.log(`Client: ${result.modifiedCount} Recharged Date Updated `);

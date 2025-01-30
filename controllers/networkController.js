@@ -96,7 +96,7 @@ export const editNetworkPermission = async (req, res) => {
         .json({ success: false, error: "Invalid Permission Object" });
     }
 
-    // Find and update user
+    // Find and update user permissions
     const updatedUser = await User.findByIdAndUpdate(
       id, // Find by ID
       { permissions }, // Update permissions

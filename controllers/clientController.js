@@ -3,6 +3,7 @@ import packageSchema from "../models/Packages.js";
 import subareaSchema from "../models/SubArea.js";
 import mongoose, { Schema, Types } from "mongoose";
 import jwt from "jsonwebtoken";
+import collectionSchema from "../models/Collection.js";
 
 export const deactivateClient = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
@@ -184,8 +185,10 @@ export const addClients = async (req, res) => {
       inscharges,
       insdate,
       balance,
+      paidby,
       rechargedate,
       status,
+      dayspayment,
       network_name,
     } = req.body;
     const Client = mongoose.model(network_name + "_client", clientSchema);
@@ -213,6 +216,54 @@ export const addClients = async (req, res) => {
       status,
     });
     await newClient.save();
+    if(dayspayment > 0) {
+
+      let today = new Date(); // Aaj ki date
+    let currentMonth = today.getMonth(); // Current month index (0-based)
+    let currentYear = today.getFullYear(); // Current year
+    let currentDate = today.getDate(); // Aaj ki tareekh
+
+    let newExpiryDate;
+
+    if (currentDate <= 10) {
+        // ✅ Agar aaj ki date 10 ya us se pehle hai, to isi month ki 10 par set karein
+        newExpiryDate = new Date(currentYear, currentMonth, 10);
+    } else {
+        // ✅ Agar aaj 10 se zyada hai, to next month ki 10 par set karein
+        let nextMonth = (currentMonth + 1) % 12;
+        let nextYear = currentYear + (nextMonth === 0 ? 1 : 0); // Agar next month January ho to year +1
+        newExpiryDate = new Date(nextYear, nextMonth, 10);
+    }
+      const Collection = mongoose.model(
+        network_name + "_collection",
+        collectionSchema
+      );
+      const Package = mongoose.model(network_name + '_packages', packageSchema)
+      const id = await Client.findOne({internetid:internetid})
+      const package_name = await Package.findOne({_id:packageId})
+      const newPay = new Collection({
+        clientId: id._id,
+        internetid,
+        name,
+        address,
+        packageId: package_name.package_name,
+        subareaId : subareaId,
+        monthly, // user actual fees
+        amountpaid : dayspayment, //how much user paid
+        paymentdate: new Date(insdate).toLocaleString(), 
+        paidby,
+      });
+      await newPay.save();
+      await Client.findByIdAndUpdate(
+        { _id: id._id },
+        {
+          status: "Active",
+          ispaid: "Paid",
+          rechargedate: newExpiryDate,
+        }
+      );
+      
+    }
     return res
       .status(200)
       .json({ success: true, message: "Client Add Successfully" });

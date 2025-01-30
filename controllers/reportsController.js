@@ -15,7 +15,6 @@ export const monthlyReports = async (req, res) => {
 
   try {
     const {selectMonth} = req.body
-    console.log(`Select Month  ${selectMonth}`)
     if(!selectMonth) {
       return res
       .status(400)
@@ -30,67 +29,109 @@ export const monthlyReports = async (req, res) => {
     const startDate = new Date(year, month, 1).toLocaleString()
     const endDate = new Date(year, month + 1, 1).toLocaleString()
 
-
-
-    const Client = mongoose.model(network_name + "_client", clientSchema);
-
-    const Collection = mongoose.model(
+  const Collection = mongoose.model(
       network_name + "_collection",
       collectionSchema
     );
 
-    const totalClient = await Collection.find(
-       { paymentdate: {
-        $gte : startDate,
-        $lt : endDate,
+    const paymentmethod = await Collection.aggregate([
+      { $match: { paymentdate : {$gte : new Date(startDate), $lt : new Date(endDate)}, status: "Paid"} },
+      {
+        '$group': {
+          '_id': '$paymentmethod', 
+          'amount': {
+            '$sum': '$amountpaid'
+          }
+        }
+      }, {
+        '$project': {
+          '_id': 0, 
+          'paymethod': '$_id', 
+          'amount': 1
+        }
+      },
+      {
+      $sort : {
+        amount : -1
       }
-    },{status:"Paid"}).countDocuments()
+    }
+    ])
+
+    const packageCount = await Collection.aggregate([
+      { $match: { paymentdate : {$gte : new Date(startDate), $lt : new Date(endDate)}, status: "Paid"} },
+      {
+        '$group': {
+          '_id': '$packageId', 
+          'clients': {
+            '$sum': 1
+          }
+        }
+      }, {
+        '$project': {
+          '_id': 0, 
+          'package_name': '$_id', 
+          'clients': 1
+        }
+      },{
+        $sort : {
+          clients : -1
+        }
+      }
+    ])
+
+   
 
     const totalRecovery = await Collection.aggregate([
       { $match: {paymentdate : {$gte : new Date(startDate), $lt : new Date(endDate)}} },
       { $group: { _id:null,  recovery: { $sum: "$monthly" } } },
-    ]);
+    ]); 
 
-    const totalBalance = await Collection.aggregate([
-      { $match: { paymentdate : {$gte : new Date(startDate), $lt : new Date(endDate)}, status: "Paid" } },
+    const totalOldBalance = await Collection.aggregate([
+      { $match: { paymentdate : {$gte : new Date(startDate), $lt : new Date(endDate)}} },
       { $group: { _id:null,  balance: { $sum: "$balance" } } },
     ])
 
+    const Client = mongoose.model(network_name + "_client", clientSchema);
+    const totalClientBalance = await Client.aggregate([
+      { $match: { status: "Terminated" } },
+      { $group: { _id:null,  clientBalance: { $sum: "$balance" } } },
+    ])
     const Salary = mongoose.model(network_name + "_salary", salarySchema);
     const totalSalaries = await Salary.find({paydate: {
       $gte : startDate,
       $lt : endDate,
-    }}).populate("userId", {name:1})
-
+    }}).populate("userId", {name:1}).sort({netsalary : -1})
+ 
     const Expense = mongoose.model(network_name + "_expense", expenseSchema);
     const totalExpense = await Expense.find({date: {
       $gte : startDate,
       $lt : endDate,
-    }})
-    const localdate = new Date(startDate).toLocaleDateString()
+    }}).sort({amount : -1})
     
        
       const totalCollection = await Collection.aggregate([
       { $match: { paymentdate : {$gte : new Date(startDate), $lt : new Date(endDate)}, status: "Paid"} },
-      { $group: { _id: null, totalAmount: { $sum: "$monthly" } } }, 
+      { $group: { _id: null, totalAmount: { $sum: "$amountpaid" } } }, 
     ]);
 
 
     return res.status(200).json({
       success: true,
-      totalClient,
       recovery: totalRecovery[0]?.recovery || 0,
       totalSalaries,
-      balance: totalBalance[0]?.balance || 0,
+      balance: totalOldBalance[0]?.balance || 0,
       totalExpense,
+      clientBalance : totalClientBalance[0]?.clientBalance || 0,
       totalCollection,
+      packageCount,
+      paymentmethod,
       totalAmount: totalCollection[0]?.totalAmount || 0,
     });
   } catch (error) {
     console.log(error)
     return res
       .status(500)
-      .json({ success: false, error: "Can't get dashboard data server error" });
+      .json({ success: false, error: "Can't fetcg monthly reports server error" });
   }
 };
 
