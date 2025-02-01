@@ -277,12 +277,6 @@ export const addCollection = async (req, res) => {
       };
       entries.push(entry);
     }
-    const today = new Date(rechargedate);
-    const newExpiryDate = new Date(
-      today.getFullYear(),
-      today.getMonth() + parseInt(monthspaid),
-      10
-    );
   }
 
     //Genrate monthly entries
@@ -300,13 +294,15 @@ export const addCollection = async (req, res) => {
       };
       entries.push(entry);
     }
-    const today = new Date(rechargedate);
-    const newExpiryDate = new Date(
-      today.getFullYear(),
-      today.getMonth() + parseInt(monthspaid),
-      10
-    );
+   
+    
   }
+  const today = new Date(rechargedate);
+  const newExpiryDate = new Date(
+    today.getFullYear(),
+    today.getMonth() + parseInt(monthspaid),
+    10
+  );
     const payableamount = parseInt(monthly) * parseInt(monthspaid) + parseInt(balance)
     const totalBalance = payableamount - parseInt(amountpaid);
 

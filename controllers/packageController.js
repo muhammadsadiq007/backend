@@ -35,6 +35,7 @@ export const addPackage = async (req, res) => {
     await newPkg.save();
     return res.status(200).json({ success: true, package: newPkg });
   } catch (error) {
+    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "add package server error" });

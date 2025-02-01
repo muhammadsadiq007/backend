@@ -112,7 +112,7 @@ export const getDashboard = async (req, res) => {
         },
       },
     ]);
-
+    
     const Collection = mongoose.model(
       network_name + "_collection",
       collectionSchema
