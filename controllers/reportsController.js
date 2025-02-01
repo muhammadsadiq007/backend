@@ -26,8 +26,8 @@ export const monthlyReports = async (req, res) => {
     const year = parsedDate.getFullYear()
     const month = parsedDate.getMonth()
     
-    const startDate = new Date(year, month, 1).toLocaleString()
-    const endDate = new Date(year, month + 1, 1).toLocaleString()
+    const startDate = new Date(year, month, 1)
+    const endDate = new Date(year, month + 1, 1) 
 
   const Collection = mongoose.model(
       network_name + "_collection",
