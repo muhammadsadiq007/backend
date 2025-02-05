@@ -251,7 +251,7 @@ export const activityLogs = async (req, res) => {
     const Client = mongoose.model(network_name + "_client", clientSchema);
     const Logs = mongoose.model(network_name + "_logs", logsSchema);
     const activityLogs = await Logs.find({
-     timestamp: { $gte: startDates , $lte: endDates }, cmd : String(cmdType)
+     timestamp: { $gte: startDates , $lte: endDates }, cmd : cmdType
     })
     .populate("userId", { name: 1 })
     .populate({ path: "targetId" ,select: 'internetid name', model: Client});
