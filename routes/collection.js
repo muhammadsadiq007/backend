@@ -12,7 +12,7 @@ router.get("/:id", authMiddleware, getCollection);
 router.patch("/unpaid/:id", authMiddleware, permissionCheck("paymentstatus"), statusUnpaid); 
 router.patch("/paid/:id", authMiddleware, permissionCheck("paymentstatus"), statusPaid);
 router.get("/legder/:id", authMiddleware, permissionCheck("clientlegder"), getLegder);
-router.post("/renew/:id", authMiddleware, renewClient);
+router.post("/renew/:id", authMiddleware, permissionCheck("clientpayments"), renewClient);
 
 
 export default router; 
