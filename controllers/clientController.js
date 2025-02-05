@@ -1,14 +1,17 @@
 import clientSchema from "../models/Clients.js";
 import packageSchema from "../models/Packages.js";
 import subareaSchema from "../models/SubArea.js";
+import logsSchema from "../models/Logs.js";
 import mongoose, { Schema, Types } from "mongoose";
 import jwt from "jsonwebtoken";
 import collectionSchema from "../models/Collection.js";
+import {DateTime} from "luxon";
 
 export const deactivateClient = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY); 
-  const network_name = decoded.networkname;
+  const network_name = decoded.networkname; 
+  const _id = decoded._id;
 
 
   const { id } = req.params;
@@ -17,22 +20,36 @@ export const deactivateClient = async (req, res) => {
   } = req.body
 
 try {
+  const timestamp = new Date()
+  const isoDate = DateTime.now().setZone("Asia/Karachi").toJSDate()
   const Client = mongoose.model(network_name + "_client", clientSchema);
   const updclient = await Client.findByIdAndUpdate({_id: id},{
     status,
   })
-  if (!updclient) {
+  if (!updclient) { 
     return res
       .status(404)
       .json({ success: false, error: "Document Not Found" });
   }
+  const Logs = mongoose.model(network_name + "_logs", logsSchema); 
+  const log = new Logs({
+    userId: _id, // Assume karein req.user middleware se aa raha hai
+    action: req.method, // POST (Add), PUT (Edit), DELETE
+    target: req.baseUrl, // Kis resource ko target kia
+    cmd: "Client Status",
+    newstatus: status,
+    oldstatus: "Active",
+    targetId: id || null,
+  });
+ await log.save();
   return res
   .status(200)
   .json({ success: true, message: "Client Deactivated Successfully" });
 } catch (error) {
-return res
+
+ return res
   .status(500)
-  .json({ success: false, error: "Edit Client server error" });
+  .json({ success: false, error: "Client Deactivated server error" });
 }
 }
 
@@ -40,7 +57,7 @@ export const activateClient = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY); 
   const network_name = decoded.networkname;
-
+  const _id = decoded._id;
 
   const { id } = req.params;
   const {
@@ -58,6 +75,17 @@ try {
       .status(404)
       .json({ success: false, error: "Document Not Found" });
   }
+  const Logs = mongoose.model(network_name + "_logs", logsSchema); 
+  const log = new Logs({
+    userId: _id, // Assume karein req.user middleware se aa raha hai
+    action: req.method, // POST (Add), PUT (Edit), DELETE
+    target: req.baseUrl, // Kis resource ko target kia
+    cmd: "Client Status",
+    newstatus: "Active",
+    oldstatus: "In-Active",
+    targetId: id || null,
+  });
+  await log.save();
   return res
   .status(200)
   .json({ success: true, message: "Client Activated Successfully" });
@@ -99,6 +127,7 @@ export const editClient = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
+  const _id = decoded._id;
 
 
   const { id } = req.params;
@@ -110,8 +139,6 @@ export const editClient = async (req, res) => {
     mobilenumber,
     packageId,
     monthly,
-    status,
-    rechargedate,
   } = req.body
 
 try {
@@ -124,14 +151,22 @@ try {
     mobilenumber,
     packageId,
     monthly,
-    status,
-    rechargedate,
   })
   if (!updclient) {
     return res
       .status(404)
       .json({ success: false, error: "Document Not Found" });
   }
+  const Logs = mongoose.model(network_name + "_logs", logsSchema); 
+  const log = new Logs({
+    userId: _id, // Assume karein req.user middleware se aa raha hai
+    action: req.method, // POST (Add), PUT (Edit), DELETE
+    target: req.baseUrl, // Kis resource ko target kia
+    cmd: "Edit Client",
+    newstatus: "Edit Client",
+    targetId: id || null,
+  });
+  await log.save();
   return res
   .status(200)
   .json({ success: true, message: "Client Updated Successfully" });
@@ -171,7 +206,7 @@ export const getClients = async (req, res) => {
 };
 
 export const addClients = async (req, res) => {
-  try {
+  try { 
     const {
       internetid,
       userId,
@@ -186,7 +221,9 @@ export const addClients = async (req, res) => {
       insdate,
       balance,
       paidby,
-      rechargedate,
+      transid,
+      date,
+      paymentmethod,
       status,
       dayspayment,
       network_name,
@@ -212,10 +249,22 @@ export const addClients = async (req, res) => {
       inscharges,
       insdate,
       balance,
-      rechargedate,
+      createdAt: date,
+      rechargedate: new Date(),
       status,
     });
     await newClient.save();
+    const Logs = mongoose.model(network_name + "_logs", logsSchema); 
+    const id = await Client.findOne({internetid:internetid})
+  const log = new Logs({
+    userId: userId, // Assume karein req.user middleware se aa raha hai
+    action: req.method, // POST (Add), PUT (Edit), DELETE
+    target: req.baseUrl, // Kis resource ko target kia
+    cmd: "New Client",
+    newstatus: internetid,
+    targetId: id._id || null,
+  });
+  await log.save();
     if(dayspayment > 0) {
 
       let today = new Date(); // Aaj ki date
@@ -248,12 +297,25 @@ export const addClients = async (req, res) => {
         address,
         packageId: package_name.package_name,
         subareaId : subareaId,
-        monthly, // user actual fees
         amountpaid : dayspayment, //how much user paid
         paymentdate: new Date(insdate).toLocaleString(), 
+        transid,
+        paymentmethod,
         paidby,
       });
       await newPay.save();
+      const Logs = mongoose.model(network_name + "_logs", logsSchema); 
+      const log = new Logs({
+        userId: userId, // Assume karein req.user middleware se aa raha hai
+        action: req.method, // POST (Add), PUT (Edit), DELETE
+        target: req.baseUrl, // Kis resource ko target kia
+        cmd: "Renew",
+        newstatus: "New Client",
+        oldstatus: "",
+        newstatus: internetid,
+        targetId: id._id || null,
+      });
+      await log.save();
       await Client.findByIdAndUpdate(
         { _id: id._id },
         {

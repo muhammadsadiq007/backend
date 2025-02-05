@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import collectionSchema from "../models/Collection.js";
+import logsSchema from "../models/Logs.js";
 import jwt from "jsonwebtoken";
 import subareaSchema from "../models/SubArea.js";
 import clientSchema from "../models/Clients.js";
@@ -8,6 +9,7 @@ export const renewClient = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
+  const _id = decoded._id;
   
   try {
     const { id } = req.params;
@@ -16,7 +18,6 @@ export const renewClient = async (req, res) => {
     name,
     address,
     packageId,
-    monthly, // user actual fees
     paymentmethod,
     paymentdate,
     subareaId,
@@ -43,7 +44,6 @@ export const renewClient = async (req, res) => {
 
     // ✅ Client ki expiry date update karein
     
-    console.log(newExpiryDate)
     const Collection = mongoose.model(
       network_name + "_collection",
       collectionSchema
@@ -54,9 +54,8 @@ export const renewClient = async (req, res) => {
       name,
       address,
       packageId,
-      monthly, // user actual fees
       paymentmethod,
-      paymentdate: new Date(paymentdate).toLocaleString(), 
+      paymentdate: new Date(paymentdate), 
       subareaId,
       paidby,
       amountpaid, //how much user paid
@@ -64,6 +63,19 @@ export const renewClient = async (req, res) => {
     });
    
     await newPay.save();
+    console.log(newPay)
+    const Logs = mongoose.model(network_name + "_logs", logsSchema); 
+    const log = new Logs({
+      userId: _id, // Assume karein req.user middleware se aa raha hai
+      action: req.method, // POST (Add), PUT (Edit), DELETE
+      target: req.baseUrl, // Kis resource ko target kia
+      cmd: "Renew",
+      newstatus: "Renew",
+      oldstatus: "Terminated",
+      targetId: id || null,
+    });
+    console.log(log)
+    // await log.save();
     const Client = mongoose.model(network_name + "_client", clientSchema);
     await Client.findByIdAndUpdate(
       { _id: id },
@@ -91,8 +103,10 @@ export const statusUnpaid = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
+  const _id = decoded._id;
   const { id } = req.params;
-  const { status, rechargedate, clientId, amountpaid, monthspaid } = req.body;
+  
+  const { status, rechargedate, balance, clientId, amountpaid, monthspaid } = req.body;
   try {
     const Collection = mongoose.model(
       network_name + "_collection",
@@ -104,19 +118,29 @@ export const statusUnpaid = async (req, res) => {
         status: status,
       }
     );
+    const Logs = mongoose.model(network_name + "_logs", logsSchema); 
+    const log = new Logs({
+      userId: _id, // Assume karein req.user middleware se aa raha hai
+      action: req.method, // POST (Add), PUT (Edit), DELETE
+      target: req.baseUrl, // Kis resource ko target kia
+      cmd: "Payment Status",
+      newstatus: status,
+      oldstatus: "Paid",
+      targetId: id || null,
+    });
+    await log.save();
     const today = new Date(rechargedate);
-    const nextMonth = new Date(today.getFullYear(), today.getMonth() - monthspaid, 10);
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() - parseInt(monthspaid), 10);
     const Client = mongoose.model(network_name + "_client", clientSchema);
-    await Client.findOneAndUpdate(
-      { internetid: clientId },
+    const clientUpdate = await Client.findByIdAndUpdate(
+      { _id: clientId },
       {
-        balance: -parseInt(amountpaid),
-        ispaid: "Unpaid",
+        balance: balance,
+        ispaid: status,
         status: "In-Active",
-        rechargedate: new Date(nextMonth).toLocaleDateString(),
+        rechargedate: new Date(nextMonth),
       }
     );
-
     return res
       .status(200)
       .json({ success: true, message: "successfully change" });
@@ -131,32 +155,53 @@ export const statusPaid = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
+  const _id = decoded._id;
   const { id } = req.params;
-  const { status, rechargedate, clientId, amountpaid ,monthspaid } = req.body;
+  const { status, monthly ,balance, clientId, amountpaid ,monthspaid } = req.body;
   try {
+    let totalBalance
+    const payableamount = parseInt(monthly) * parseInt(monthspaid) + parseInt(balance)
+    if(monthly === '0') {
+     totalBalance = '0';
+    } else {
+     totalBalance = payableamount - parseInt(amountpaid);
+    }
     const Collection = mongoose.model(
       network_name + "_collection",
       collectionSchema
     );
-    const legder = await Collection.findByIdAndUpdate(
+    await Collection.findByIdAndUpdate(
       { _id: id },
       {
         status: status,
       }
     );
-    const today = new Date(rechargedate);
-    const nextMonth = new Date(today.getFullYear(), today.getMonth() + monthspaid, 10);
+    const Logs = mongoose.model(network_name + "_logs", logsSchema); 
+  const log = new Logs({
+    userId: _id, // Assume karein req.user middleware se aa raha hai
+    action: req.method, // POST (Add), PUT (Edit), DELETE
+    target: req.baseUrl, // Kis resource ko target kia
+    cmd: "Payment Status",
+    newstatus: status,
+    oldstatus: "Unpaid",
+    targetId: id || null,
+  });
+  console.log(log)
+  await log.save();
+    const today = new Date();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + parseInt(monthspaid), 10);
+    console.log(nextMonth)
     const Client = mongoose.model(network_name + "_client", clientSchema);
-    await Client.findOneAndUpdate(
-      {  internetid: clientId },
+    const clientUpdate = await Client.findByIdAndUpdate(
+      { _id: clientId },
       {
-        balance: +parseInt(amountpaid),
-        ispaid: "Paid",
+        balance: totalBalance,
+        ispaid: status,
         status: "Active",
-        rechargedate: new Date(nextMonth).toLocaleDateString(),
+        rechargedate: new Date(nextMonth),
+        
       }
     );
-
     return res
       .status(200)
       .json({ success: true, message: "successfully change" });
@@ -238,6 +283,8 @@ export const addCollection = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
+  const _id = decoded._id;
+
   const { id } = req.params;
 
   try {
@@ -253,6 +300,7 @@ export const addCollection = async (req, res) => {
       rechargedate,
       paytype,
       subareaId,
+      transid,
       paidby,
       amountpaid, //user actual amount paid
       balance, // user previous balanace
@@ -297,7 +345,7 @@ export const addCollection = async (req, res) => {
    
     
   }
-  const today = new Date(rechargedate);
+  const today = new Date();
   const newExpiryDate = new Date(
     today.getFullYear(),
     today.getMonth() + parseInt(monthspaid),
@@ -335,11 +383,24 @@ export const addCollection = async (req, res) => {
       paymentmethod,
       paymentdate: new Date(paymentdate).toLocaleString(), 
       subareaId,
+      transid,
       paidby,
       balance, // user previous balanace
       entries,
     });
     await newPay.save();
+    console.log(newPay)
+    const Logs = mongoose.model(network_name + "_logs", logsSchema); 
+  const log = new Logs({
+    userId: _id, // Assume karein req.user middleware se aa raha hai
+    action: req.method, // POST (Add), PUT (Edit), DELETE
+    target: req.baseUrl, // Kis resource ko target kia
+    cmd: "Payment",
+    newstatus: "Paid",
+    oldstatus: "Unpaid",
+    targetId: id || null,
+  });
+  await log.save();
     await Client.findByIdAndUpdate(
       { _id: id },
       {

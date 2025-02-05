@@ -15,12 +15,12 @@ import expenseRouter from "./routes/expense.js"
 import reportsRouter from "./routes/reports.js"
 import paymethodRouter from "./routes/paymentmethod.js"
 import exptypeRouter from "./routes/expensetype.js"
-// import cron from "node-cron"
-// import { clientScheduler } from "./controllers/schedulerController.js"
+import cron from "node-cron"
+import { clientScheduler } from "./controllers/schedulerController.js"
 
-// cron.schedule(' 0 0 * * *',() => {
-//     clientScheduler()
-// })
+cron.schedule(' 0 6 * * *',() => {
+    clientScheduler() 
+})
 
 
 connectToDatabase()

@@ -3,7 +3,7 @@ import clientSchema from "../models/Clients.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import collectionSchema from "../models/Collection.js";
-import { compareAsc, format } from "date-fns";
+import { format } from "date-fns";
 import packageSchema from "../models/Packages.js";
 
 export const getEmployeeDashboard = async (req, res) => {
@@ -17,8 +17,6 @@ export const getEmployeeDashboard = async (req, res) => {
     const totalClient = await Client.find({
       status: "Active",
     }).countDocuments();
-
-
  
     const Collection = mongoose.model(
       network_name + "_collection",
@@ -79,6 +77,13 @@ export const getDashboard = async (req, res) => {
       { $match: { status: "Active" } },
       { $group: { _id:null,  recovery: { $sum: "$monthly" } } },
     ]);
+    const today = new Date()
+    const threeDaysLater = new Date()
+    threeDaysLater.setDate(today.getDate() + 3)
+    const expiringUsers = await Client.find({
+      rechargedate : {$gte : today, $lte : threeDaysLater },
+    }).countDocuments()
+
     const Package = mongoose.model(network_name + "_packages", packageSchema);
 
     const packageCount = await Client.aggregate([
@@ -150,6 +155,7 @@ export const getDashboard = async (req, res) => {
       recovery: totalRecovery[0]?.recovery || 0,
       packageCount,
       unpaidClients,
+      expiringUsers,
       clientsCollection ,
       totalAmount: totalCollection[0]?.totalAmount || 0,
     });

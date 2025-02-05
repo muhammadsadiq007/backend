@@ -25,7 +25,8 @@ const collectionSchema = new mongoose.Schema(
       required: true,
     },
     paidby: { type: String, required: true },
-    monthly: { type: Number, required: true },
+    transid: { type: String },
+    monthly: { type: Number, default: 0 },
     amountpaid: { type: Number, default: 0 },
     monthspaid: { type: Number, default: 0 },
     entries: [

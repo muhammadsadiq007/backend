@@ -2,6 +2,7 @@ import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { addClients, editClient, getClient, getClients, activateClient, deactivateClient } from "../controllers/clientController.js";
 import { permissionCheck } from "../middleware/roleCheck.js";
+import { logsAction } from "../middleware/logAction.js";
 
 const router = express.Router();
 

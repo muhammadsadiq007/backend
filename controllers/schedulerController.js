@@ -5,11 +5,6 @@ import User from "../models/User.js";
 
 export const clientScheduler = async() => {
     try {
-
-
-
-
-
         const user = await User.find({}, {networkname:1});
         const today = new Date()
 
@@ -19,6 +14,29 @@ export const clientScheduler = async() => {
             const dbase = networkname + "_client"
             
             const Client = mongoose.model(dbase, clientSchema);
+            const result = await Client.updateMany({
+                rechargedate: {$lt: today },
+                status: 'Active',
+            },
+                { $set:{status : 'In-Active'}}
+        )
+        }
+    } catch (error) {
+       
+    }
+}
+
+export const unpaidScheduler = async() => {
+    try {
+        const user = await User.find({}, {networkname:1});
+        const today = new Date()
+
+        for (const network of user) {
+            const { networkname } = network;
+
+            const dbase = networkname + "_client"
+            
+            const Client = mongoose.model(dbase, clientSchema); 
             const result = await Client.updateMany({
                 rechargedate: {$lt: today },
                 status: 'Active',
