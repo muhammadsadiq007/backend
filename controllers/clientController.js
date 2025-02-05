@@ -5,7 +5,6 @@ import logsSchema from "../models/Logs.js";
 import mongoose, { Schema, Types } from "mongoose";
 import jwt from "jsonwebtoken";
 import collectionSchema from "../models/Collection.js";
-import {DateTime} from "luxon";
 
 export const deactivateClient = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
@@ -20,8 +19,6 @@ export const deactivateClient = async (req, res) => {
   } = req.body
 
 try {
-  const timestamp = new Date()
-  const isoDate = DateTime.now().setZone("Asia/Karachi").toJSDate()
   const Client = mongoose.model(network_name + "_client", clientSchema);
   const updclient = await Client.findByIdAndUpdate({_id: id},{
     status,
