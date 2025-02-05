@@ -5,6 +5,8 @@ const userSchema = new mongoose.Schema({
     networkname: {type: String, required:true},
     email: {type: String, unique:true ,required:true},
     password: {type: String,required:true},
+    database : {type: String, default:"No"},
+    isActive : {type: String, default:"Yes"},
     role: {type: String, enum: ["master", "admin", "employee"], required:true},
     permissions: {
         addclient: {type: Number, default: 0},

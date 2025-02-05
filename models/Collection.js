@@ -34,7 +34,6 @@ const collectionSchema = new mongoose.Schema(
         month: {type : String},
         _id: false,
       },
-      
     ],
     balance: { type: Number, default: 0 },
     status: { type: String, default: "Paid" },

@@ -41,7 +41,7 @@ try {
  await log.save();
   return res
   .status(200)
-  .json({ success: true, message: "Client Deactivated Successfully" });
+  .json({ success: true, message: `${internetid} has been Deactivated` });
 } catch (error) {
 
  return res
@@ -85,7 +85,7 @@ try {
   await log.save();
   return res
   .status(200)
-  .json({ success: true, message: "Client Activated Successfully" });
+  .json({ success: true, message: `${internetid} has been Activated` });
 } catch (error) {
 return res
   .status(500)
@@ -166,7 +166,7 @@ try {
   await log.save();
   return res
   .status(200)
-  .json({ success: true, message: "Client Updated Successfully" });
+  .json({ success: true, message: `${internetid} has been Updated` });
 } catch (error) {
 return res
   .status(500)
@@ -325,7 +325,7 @@ export const addClients = async (req, res) => {
     }
     return res
       .status(200)
-      .json({ success: true, message: "Client Add Successfully" });
+      .json({ success: true, message: `${internetid} has been added!` });
   } catch (error) {
     return res.status(500).json({
       success: false,

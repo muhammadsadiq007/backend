@@ -297,7 +297,6 @@ export const addCollection = async (req, res) => {
       monthspaid,
       paymentmethod,
       paymentdate,
-      rechargedate,
       paytype,
       subareaId,
       transid,

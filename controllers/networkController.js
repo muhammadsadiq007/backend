@@ -1,6 +1,52 @@
 import User from "../models/User.js";
 import crypto from "crypto";
 
+export const editNetwork = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      network_name,
+      net_admin_name,
+      net_admin_email,
+      net_admin_role,
+      isActive,
+      database,
+    } = req.body;
+
+    const updnetwork = await User.findByIdAndUpdate({_id: id},{
+      name: net_admin_name,
+      networkname: network_name,
+      email: net_admin_email,
+      role: net_admin_role,
+      isActive,
+      database,
+    })
+    if (!updnetwork) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Document Not Found" });
+    }
+    return res.status(200).json({ success: true, message: `${net_admin_name} has been updated!` });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, error: "Somthing is wrong with server" });
+  }
+};
+
+export const editNetworkData = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = await User.findOne({ _id: id }, {permissions:0, password:0});
+
+    return res.status(200).json({ success: true, netdata: data });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, error: "Somthing is wrong with server" });
+  }
+};
+
 export const getNetworkData = async (req, res) => {
   try {
     const { id } = req.params;
