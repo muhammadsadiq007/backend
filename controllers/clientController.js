@@ -85,8 +85,9 @@ try {
   await log.save();
   return res
   .status(200)
-  .json({ success: true, message: `${internetid} has been Activated` });
+  .json({ success: true, message: `Client has been Activated` });
 } catch (error) {
+  console.log(error)
 return res
   .status(500)
   .json({ success: false, error: "Edit Client server error" });

@@ -7,6 +7,6 @@ const router = express.Router();
 router.get("/", authMiddleware, getExpTypes);
 router.post("/add", authMiddleware, addExpType);
 router.get("/:id", authMiddleware, getExpType);
-router.patch("/:id", authMiddleware, editExpType);
+router.patch("/:id", authMiddleware, editExpType); 
 
 export default router;

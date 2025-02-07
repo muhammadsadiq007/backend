@@ -5,7 +5,7 @@ import clientSchema from "../models/Clients.js";
 import subareaSchema from "../models/SubArea.js";
 import jwt from "jsonwebtoken";
 import salarySchema from "../models/Salary.js";
-import expenseSchema from "../models/Expense.js";
+import {expenseSchema} from "../models/Expense.js";
 import logsSchema from "../models/Logs.js"; 
 
 export const monthlyReports = async (req, res) => {
@@ -13,9 +13,8 @@ export const monthlyReports = async (req, res) => {
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
 
-  try {
+  try { 
     const { selectMonth } = req.body;
-    console.log(selectMonth);
     if (!selectMonth) {
       return res
         .status(400)
@@ -157,7 +156,6 @@ export const monthlyReports = async (req, res) => {
       totalAmount: totalCollection[0]?.totalAmount || 0,
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       success: false,
       error: "Can't fetcg monthly reports server error",
@@ -258,7 +256,6 @@ export const activityLogs = async (req, res) => {
 
     return res.status(200).json({ success: true, activityLogs });
   } catch (error) {
-    console.log(error);
     return res
       .status(500)
       .json({ success: false, error: "Somthing Wrong with Server" });

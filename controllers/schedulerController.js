@@ -2,7 +2,6 @@ import clientSchema from "../models/Clients.js";
 import mongoose, { Schema } from "mongoose";
 import User from "../models/User.js";
 import collectionSchema from "../models/Collection.js";
-// import getDynamicUserModel from "./helpers/dynamicModel"
 
 export const clientScheduler = async () => {
   try {
@@ -20,7 +19,7 @@ export const clientScheduler = async () => {
           rechargedate: { $lt: today },
           status: "Active",
         },
-        { $set: { status: "In-Active" } }
+        { $set: { status: "In-Active", ispaid: "Unpaid" } }
       );
     }
   } catch (error) {}
@@ -48,7 +47,6 @@ export const unpaidScheduler = async () => {
     // Find clients who had a subscription in the previous month
 
     const user = await User.find({ database: "Yes" }, { networkname: 1 });
-    console.log(user);
     for (const network of user) {
       const { networkname } = network;
 
@@ -79,9 +77,8 @@ export const unpaidScheduler = async () => {
         { _id: { $in: unpaidClients.map((c) => c.clientId) } },
         { $set: { ispaid: "Unpaid" } }
       );
-      console.log(`${updatedClients.modifiedCount} clients marked as Unpaid.`);
+      // console.log(`${updatedClients.modifiedCount} clients marked as Unpaid.`);
     }
   } catch (error) {
-    console.error("Error updating unpaid clients:", error);
   }
 };

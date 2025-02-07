@@ -63,7 +63,6 @@ export const renewClient = async (req, res) => {
     });
    
     await newPay.save();
-    console.log(newPay)
     const Logs = mongoose.model(network_name + "_logs", logsSchema); 
     const log = new Logs({
       userId: _id, // Assume karein req.user middleware se aa raha hai
@@ -74,8 +73,7 @@ export const renewClient = async (req, res) => {
       oldstatus: "Terminated",
       targetId: id || null,
     });
-    console.log(log)
-    // await log.save();
+    await log.save();
     const Client = mongoose.model(network_name + "_client", clientSchema);
     await Client.findByIdAndUpdate(
       { _id: id },
@@ -89,7 +87,6 @@ export const renewClient = async (req, res) => {
     .status(200)
     .json({ success: true, message: `${internetid} Payment Added Successfully` });
   } catch (error) {
-    console.log(error)
     return res.status(500).json({
       success: false,
       error: "Can't Add Client Server Error",
@@ -186,11 +183,9 @@ export const statusPaid = async (req, res) => {
     oldstatus: "Unpaid",
     targetId: id || null,
   });
-  console.log(log)
   await log.save();
     const today = new Date();
     const nextMonth = new Date(today.getFullYear(), today.getMonth() + parseInt(monthspaid), 10);
-    console.log(nextMonth)
     const Client = mongoose.model(network_name + "_client", clientSchema);
     const clientUpdate = await Client.findByIdAndUpdate(
       { _id: clientId },
@@ -261,18 +256,31 @@ export const getCollection = async (req, res) => {
 export const getCollections = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY);
-  const network_name = decoded.networkname;
+  const network_name = decoded.networkname; 
   try {
+    const timeZoneOffset = `+05:00`
+    const now = new Date()
+    // First day of the month at 00:00:00.000
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startDate = startOfMonth.toISOString().split('T')[0] + `T23:59:59.999${timeZoneOffset}`;
+
+    // Last day of the month at 23:59:59.999
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const endDate = endOfMonth.toISOString().split('T')[0] + `T23:59:59.999${timeZoneOffset}`;
+
     const Collection = mongoose.model(
       network_name + "_collection",
       collectionSchema
     );
     const Client = mongoose.model(network_name + "_client", clientSchema);
-    const clientsCollection = await Collection.find()
+    const clientsCollection = await Collection.find({
+      paymentdate: { $gte: new Date(startDate), $lte: new Date(endDate) },
+    })
       .sort({ createdAt: -1 })
       .populate({ path: "clientId", select: "rechargedate", model: Client });
     return res.status(200).json({ success: true, clientsCollection });
   } catch (error) {
+    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "get client server error" });
@@ -306,7 +314,7 @@ export const addCollection = async (req, res) => {
     } = req.body;
 
        // Calculate the Start Date
-    const startDate = new Date();
+    const startDate = new Date(paymentdate);
     const entries = [];
 
     // Advance Payments
@@ -344,7 +352,7 @@ export const addCollection = async (req, res) => {
    
     
   }
-  const today = new Date();
+  const today = new Date(paymentdate);
   const newExpiryDate = new Date(
     today.getFullYear(),
     today.getMonth() + parseInt(monthspaid),
@@ -388,7 +396,6 @@ export const addCollection = async (req, res) => {
       entries,
     });
     await newPay.save();
-    console.log(newPay)
     const Logs = mongoose.model(network_name + "_logs", logsSchema); 
   const log = new Logs({
     userId: _id, // Assume karein req.user middleware se aa raha hai

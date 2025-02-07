@@ -35,7 +35,6 @@ export const addPackage = async (req, res) => {
     await newPkg.save();
     return res.status(200).json({ success: true, package: newPkg });
   } catch (error) {
-    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "add package server error" });
@@ -77,17 +76,3 @@ export const editPackage = async (req, res) => {
       .json({ success: false, error: "Edit Package server errorss" });
   }
 };
-
-
-
-// export const deletePackage = async (req, res) => {
-//   // try {
-//   //   const { id } = req.params;
-//   //   const deletePkg = await Package.findByIdAndDelete({_id: id});
-//   //   return res.status(200).json({ success: true, deletePkg });
-//   // } catch (error) {  
-//   //   return res
-//   //     .status(500)
-//   //     .json({ success: false, error: "Delete  package server errorss" });
-//   // }
-// };
