@@ -3,7 +3,6 @@ import clientSchema from "../models/Clients.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import collectionSchema from "../models/Collection.js";
-import { format } from "date-fns";
 import packageSchema from "../models/Packages.js";
 
 export const getEmployeeDashboard = async (req, res) => {
@@ -22,8 +21,6 @@ export const getEmployeeDashboard = async (req, res) => {
       network_name + "_collection",
       collectionSchema
     );
-    const month = format(new Date(), "MMMM");
-    const year = format(new Date(), "yyyy");
 
     const unpaidClients = await Client.find({
       $and : [ {ispaid: "Unpaid"} , {status: { $ne: "Terminated" }} ]
@@ -122,8 +119,6 @@ export const getDashboard = async (req, res) => {
       network_name + "_collection",
       collectionSchema
     );
-    const month = format(new Date(), "MMMM");
-    const year = format(new Date(), "yyyy");
 
     const unpaidClients = await Client.find({
       $and : [ {ispaid: "Unpaid"} , {status: { $ne: "Terminated" }} ]

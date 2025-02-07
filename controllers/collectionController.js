@@ -404,7 +404,7 @@ export const addCollection = async (req, res) => {
     cmd: "Payment",
     newstatus: "Paid",
     oldstatus: "Unpaid",
-    targetId: id || null,
+    targetId: id || null, 
   });
   await log.save();
     await Client.findByIdAndUpdate(
