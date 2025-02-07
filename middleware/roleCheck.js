@@ -7,7 +7,7 @@ export const permissionCheck = (requiredPermission) => (req, res, next) => {
       const user = decoded;
     if (!user || user.permissions[requiredPermission] !== 1)
     {
-        return res.status(403).json({status : false, error: "You are Authorized for this action"})
+        return res.status(403).json({status : false, error: "You are not Authorized for this action"})
     }
     next()
   };
