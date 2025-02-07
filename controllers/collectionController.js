@@ -280,7 +280,6 @@ export const getCollections = async (req, res) => {
       .populate({ path: "clientId", select: "rechargedate", model: Client });
     return res.status(200).json({ success: true, clientsCollection });
   } catch (error) {
-    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "get client server error" });
@@ -420,7 +419,6 @@ export const addCollection = async (req, res) => {
       .status(200)
       .json({ success: true, message: `${internetid} Payment Added Successfully` });
   } catch (error) {
-    console.log(error)
     return res.status(500).json({
       success: false,
       error: "Can't Add Client Payment Server Error",

@@ -30,16 +30,8 @@ export const getMonthlySalaries = async (req, res) => {
     }).populate("userId", {name: 1}).populate({
       path: 'employeeId',select: 'emp_salary', model: Employee
     }).populate("addedbyId", {name:1})
-    // const salaryRecords = await Salary.find()
-
-    // if (!salaryRecords) {
-    //   const salaryRecords = await Salary.findOne({ employeeId: id }).populate(
-    //     "employeeId"
-    //   );
-    // }
     return res.status(200).json({ success: true, salaryRecords });
   } catch (error) {
-    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "Can't Get Salary Records Server Error" });
@@ -69,16 +61,8 @@ export const getSalaries = async (req, res) => {
     }).populate("userId", {name: 1}).populate({
       path: 'employeeId',select: 'emp_salary', model: Employee
     }).populate("addedbyId", {name:1})
-    // const salaryRecords = await Salary.find()
-
-    // if (!salaryRecords) {
-    //   const salaryRecords = await Salary.findOne({ employeeId: id }).populate(
-    //     "employeeId"
-    //   );
-    // }
     return res.status(200).json({ success: true, salaryRecords });
   } catch (error) {
-    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "Can't Get Salary Records Server Error" });
@@ -98,13 +82,6 @@ export const getSalary = async (req, res) => {
     const salaryRecords = await Salary.find({ employeeId: id }).populate("userId").populate("addedbyId", {name:1}).populate({
       path: 'employeeId', model: Employee
     })
-    // const salaryRecords = await Salary.find()
-
-    // if (!salaryRecords) {
-    //   const salaryRecords = await Salary.findOne({ employeeId: id }).populate(
-    //     "employeeId"
-    //   );
-    // }
     return res.status(200).json({ success: true, salaryRecords });
   } catch (error) {
     return res

@@ -87,7 +87,6 @@ try {
   .status(200)
   .json({ success: true, message: `Client has been Activated` });
 } catch (error) {
-  console.log(error)
 return res
   .status(500)
   .json({ success: false, error: "Edit Client server error" });
