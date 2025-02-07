@@ -1,6 +1,6 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
-import { getSubarea, addSubarea, getSubareas, editSubarea } from "../controllers/subareaController.js";
+import { getSubarea, addSubarea, getSubareas, editSubarea } from "../controllers/subareacontroller.js";
 
 const   router = express.Router();
 
