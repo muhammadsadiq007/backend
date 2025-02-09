@@ -26,6 +26,13 @@ export const getEmployeeDashboard = async (req, res) => {
       $and : [ {ispaid: "Unpaid"} , {status: { $ne: "Terminated" }} ]
     }).countDocuments().lean();
 
+    const today = new Date()
+    const threeDaysLater = new Date()
+    threeDaysLater.setDate(today.getDate() + 3)
+    const expiringUsers = await Client.find({
+      rechargedate : {$gte : today, $lte : threeDaysLater },
+    }).countDocuments()
+
     const Payments = mongoose.model(
       network_name + "_collection",
       collectionSchema
@@ -50,6 +57,7 @@ export const getEmployeeDashboard = async (req, res) => {
       success: true,
       totalClient,
       unpaidClients,
+      expiringUsers,
       clientsCollection ,
       totalAmount: totalCollection[0]?.totalAmount || 0,
     });
