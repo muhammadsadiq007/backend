@@ -244,7 +244,7 @@ export const collectionReports = async (req, res) => {
 export const activityLogs = async (req, res) => {
   const { startDate, endDate, cmdType, network_name } = req.body;
   const startDates = new Date(`${startDate}T00:00:00.000+05:00`)
-  const endDates = new Date(`${endDate}T23:59:59.999+05:00`)
+  const endDates = new Date(`${endDate}T23:59:59.999+05:00`) 
   try {
     const Client = mongoose.model(network_name + "_client", clientSchema);
     const Logs = mongoose.model(network_name + "_logs", logsSchema);
