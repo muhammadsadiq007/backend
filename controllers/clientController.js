@@ -65,7 +65,7 @@ try {
   const Client = mongoose.model(network_name + "_client", clientSchema);
   const updclient = await Client.findByIdAndUpdate({_id: id},{
     status : "Active",
-    rechargedate,
+    rechargedate: new Date(rechargedate).setHours(new Date(rechargedate).getHours()+5),
   })
   if (!updclient) {
     return res

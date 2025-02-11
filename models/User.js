@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
         clientlegder:{type: Number, default: 0},
         clientpayments:{type: Number, default: 0},
         paymentstatus:{type: Number, default: 0},
+        deletepayment:{type: Number, default: 0},
     },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },

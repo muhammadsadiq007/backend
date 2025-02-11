@@ -80,7 +80,7 @@ export const renewClient = async (req, res) => {
       {
         status: "Active",
         ispaid: "Paid",
-        rechargedate: newExpiryDate,
+        rechargedate: new Date(newExpiryDate).setHours(new Date(newExpiryDate).getHours()+5),
       }
     );
     return res
@@ -104,8 +104,6 @@ export const statusUnpaid = async (req, res) => {
   const { id } = req.params;
   
   const { status, rechargedate, balance, clientId, amountpaid, monthspaid } = req.body;
-  console.log(req.body)
-  console.log(id)
   try {
     const Collection = mongoose.model(
       network_name + "_collection",
@@ -128,7 +126,6 @@ export const statusUnpaid = async (req, res) => {
       targetId: clientId,
     });
     await log.save();
-    console.log(log)
     const today = new Date(rechargedate);
     const nextMonth = new Date(today.getFullYear(), today.getMonth() - parseInt(monthspaid), 10);
     const Client = mongoose.model(network_name + "_client", clientSchema);
@@ -158,7 +155,6 @@ export const statusPaid = async (req, res) => {
   const _id = decoded._id;
   const { id } = req.params;
   const { status, monthly ,balance, clientId, amountpaid ,monthspaid } = req.body;
-  console.log(req.body)
   try {
     let totalBalance
     const payableamount = parseInt(monthly) * parseInt(monthspaid) + parseInt(balance)
@@ -197,7 +193,7 @@ export const statusPaid = async (req, res) => {
         balance: totalBalance,
         ispaid: status,
         status: "Active",
-        rechargedate: new Date(nextMonth),
+        rechargedate: new Date(nextMonth).setHours(new Date(nextMonth).getHours()+5),
         
       }
     );
@@ -205,7 +201,6 @@ export const statusPaid = async (req, res) => {
       .status(200)
       .json({ success: true, message: "successfully change" });
   } catch (error) {
-    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "get client server error" });
@@ -428,5 +423,44 @@ export const addCollection = async (req, res) => {
       success: false,
       error: "Can't Add Client Payment Server Error",
     });
+  }
+};
+
+export const delCollection = async (req, res) => {
+
+
+  const token = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_KEY);
+  const network_name = decoded.networkname;
+  const _id = decoded._id;
+  const { id } = req.params;
+
+  try {
+    const Collection = mongoose.model( 
+      network_name + "_collection",
+      collectionSchema
+    );
+    const delData = await Collection.findById({_id: id})
+    const Logs = mongoose.model(network_name + "_logs", logsSchema); 
+    const log = new Logs({
+      userId: _id, // Assume karein req.user middleware se aa raha hai
+      action: req.method, // POST (Add), PUT (Edit), DELETE
+      target: req.baseUrl, // Kis resource ko target kia
+      cmd: "Delete Payment",
+      newstatus: "Deleted",
+      oldstatus: delData.status,
+      targetId: delData.clientId,
+    });
+    await log.save();
+    const legder = await Collection.findByIdAndDelete(
+      { _id: id },
+    );
+    return res
+      .status(200)
+      .json({ success: true, message: "successfully change" });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, error: "get client server error" });
   }
 };
