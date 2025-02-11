@@ -20,11 +20,12 @@ import { clientScheduler, unpaidScheduler } from "./controllers/schedulerControl
 cron.schedule(' 0 6 * * *',() => {
     clientScheduler() 
 })
+
 cron.schedule(' 0 0 1 * *',() => {
     unpaidScheduler() 
 })
 // cron.schedule(' * * * * *',() => {
-//     unpaidScheduler() 
+//     clientScheduler() 
 // })
 
 

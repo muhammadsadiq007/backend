@@ -36,7 +36,7 @@ try {
     cmd: "Client Status",
     newstatus: status,
     oldstatus: "Active",
-    targetId: id || null,
+    targetId: id,
   });
  await log.save();
   return res
@@ -80,7 +80,7 @@ try {
     cmd: "Client Status",
     newstatus: "Active",
     oldstatus: "In-Active",
-    targetId: id || null,
+    targetId: id
   });
   await log.save();
   return res
@@ -161,12 +161,12 @@ try {
     target: req.baseUrl, // Kis resource ko target kia
     cmd: "Edit Client",
     newstatus: "Edit Client",
-    targetId: id || null,
+    targetId: id,
   });
   await log.save();
   return res
   .status(200)
-  .json({ success: true, message: `${internetid} has been Updated` });
+  .json({ success: true, message: "Client has been Updated" });
 } catch (error) {
 return res
   .status(500)
@@ -259,9 +259,11 @@ export const addClients = async (req, res) => {
     target: req.baseUrl, // Kis resource ko target kia
     cmd: "New Client",
     newstatus: internetid,
-    targetId: id._id || null,
+    targetId: id._id,
   });
+  console.log(log)
   await log.save();
+
     if(dayspayment > 0) {
 
       let today = new Date(); // Aaj ki date
@@ -309,8 +311,8 @@ export const addClients = async (req, res) => {
         cmd: "Renew",
         newstatus: "New Client",
         oldstatus: "",
-        newstatus: internetid,
-        targetId: id._id || null,
+        newstatus: "Paid",
+        targetId: id._id,
       });
       await log.save();
       await Client.findByIdAndUpdate(

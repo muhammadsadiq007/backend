@@ -22,6 +22,7 @@ export const clientScheduler = async () => {
         { $set: { status: "In-Active", ispaid: "Unpaid" } }
       );
     }
+    console.log(`${result.modifiedCount} clients marked as Unpaid.`)
   } catch (error) {}
 };
 

@@ -71,7 +71,7 @@ export const renewClient = async (req, res) => {
       cmd: "Renew",
       newstatus: "Renew",
       oldstatus: "Terminated",
-      targetId: id || null,
+      targetId: id,
     });
     await log.save();
     const Client = mongoose.model(network_name + "_client", clientSchema);
@@ -104,6 +104,8 @@ export const statusUnpaid = async (req, res) => {
   const { id } = req.params;
   
   const { status, rechargedate, balance, clientId, amountpaid, monthspaid } = req.body;
+  console.log(req.body)
+  console.log(id)
   try {
     const Collection = mongoose.model(
       network_name + "_collection",
@@ -123,9 +125,10 @@ export const statusUnpaid = async (req, res) => {
       cmd: "Payment Status",
       newstatus: status,
       oldstatus: "Paid",
-      targetId: id || null,
+      targetId: clientId,
     });
     await log.save();
+    console.log(log)
     const today = new Date(rechargedate);
     const nextMonth = new Date(today.getFullYear(), today.getMonth() - parseInt(monthspaid), 10);
     const Client = mongoose.model(network_name + "_client", clientSchema);
@@ -155,6 +158,7 @@ export const statusPaid = async (req, res) => {
   const _id = decoded._id;
   const { id } = req.params;
   const { status, monthly ,balance, clientId, amountpaid ,monthspaid } = req.body;
+  console.log(req.body)
   try {
     let totalBalance
     const payableamount = parseInt(monthly) * parseInt(monthspaid) + parseInt(balance)
@@ -181,7 +185,7 @@ export const statusPaid = async (req, res) => {
     cmd: "Payment Status",
     newstatus: status,
     oldstatus: "Unpaid",
-    targetId: id || null,
+    targetId: clientId,
   });
   await log.save();
     const today = new Date();
@@ -201,6 +205,7 @@ export const statusPaid = async (req, res) => {
       .status(200)
       .json({ success: true, message: "successfully change" });
   } catch (error) {
+    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "get client server error" });
@@ -403,7 +408,7 @@ export const addCollection = async (req, res) => {
     cmd: "Payment",
     newstatus: "Paid",
     oldstatus: "Unpaid",
-    targetId: id || null, 
+    targetId: id, 
   });
   await log.save();
     await Client.findByIdAndUpdate(
@@ -412,7 +417,7 @@ export const addCollection = async (req, res) => {
         balance: totalBalance,
         status: "Active",
         ispaid: "Paid",
-        rechargedate: new Date(newExpiryDate).toLocaleDateString(),
+        rechargedate: new Date(newExpiryDate).setHours(new Date(newExpiryDate).getHours()+5),
       }
     );
     return res
