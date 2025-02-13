@@ -137,11 +137,11 @@ export const getExpHead = async (req, res) => {
 
 export const addExpense = async (req, res) => {
   try {
-    const { expensetype, date, amount, details, network_name, expenseby } =
+    const { exptypeId, date, amount, details, network_name, expenseby } =
       req.body;
     const Expense = mongoose.model(network_name + "_expense", expenseSchema);
     const newExp = new Expense({
-      expensetype,
+      exptypeId,
       date,
       amount,
       details,
@@ -153,6 +153,30 @@ export const addExpense = async (req, res) => {
       message: "Expense Added Successfully",
     });
   } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: "There is somthing wrong contact admin",
+    });
+  }
+};
+
+export const editExpense = async (req, res) => {
+  try {
+    const {id} = req.params
+    const { exptypeId, amount, details, network_name } =
+      req.body;
+    const Expense = mongoose.model(network_name + "_expense", expenseSchema);
+    const newExp = await Expense.findByIdAndUpdate({_id: id} , {
+      exptypeId,
+      amount,
+      details,
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Expense Updated Successfully",
+    });
+  } catch (error) {
+    console.log(error)
     return res.status(500).json({
       success: false,
       error: "There is somthing wrong contact admin",
@@ -182,8 +206,26 @@ export const getExpense = async (req, res) => {
       date: { $gte: new Date(startDate), $lte: new Date(endDate) },
     })
       .populate("expensebyId",{name:1})
-      .sort({ cratedate: -1 });
+      .sort({ cratedate: -1 }).populate({ path: "exptypeId",  model: network_name + "_exptype", populate: { path: "expheadId", model: network_name + "_exphead" }});
     return res.status(200).json({ success: true, expenseData });
+
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ success: false, error: "Somthing Wrong Contact Admin" });
+  }
+};
+
+export const getExpenseById = async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_KEY);
+  const network_name = decoded.networkname;
+  try {
+    const { id } = req.params;
+    const Expense = mongoose.model(network_name + "_expense", expenseSchema);
+
+    const editExp = await Expense.findOne({_id : id
+    }).populate({ path: "exptypeId", model: network_name + "_exptype" })
+    return res.status(200).json({ success: true, editExp });
   } catch (error) {
     return res.status(500).json({ success: false, error: "Somthing Wrong Contact Admin" });
   }
@@ -215,9 +257,10 @@ export const getMonthlyExpense = async (req, res) => {
       date: { $gte: new Date(startDate), $lte: new Date(endDate) },
     })
       .populate("expensebyId",{name:1})
-      .sort({ cratedate: -1 });
+      .sort({ cratedate: -1 }).populate({ path: "exptypeId",  model: network_name + "_exptype", populate: { path: "expheadId", model: network_name + "_exphead" }});
     return res.status(200).json({ success: true, expenseData });
   } catch (error) {
+    console.log(error)
     return res.status(500).json({ success: false, error: "Somthing Wrong Contact Admin" });
   }
 }; 

@@ -8,13 +8,20 @@ const Network = (req) => {
 };
 
 export const expenseSchema = new mongoose.Schema({
-  expensetype: { type: String, required: true },
+  expensetype: { type: String },
   expensebyId: { type: Schema.Types.ObjectId, ref: "user", required: true },
+  exptypeId : {
+    type: Schema.Types.ObjectId,
+    ref: global.network_name + "_exptype",
+    required: true,
+  },
   amount: { type: Number, required: true },
   details: { type: String },
   date: { type: Date, default: Date.now },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+},{
+  strictPopulate: false
 });
 
 export const expHeadSchema = new mongoose.Schema({
@@ -22,7 +29,10 @@ export const expHeadSchema = new mongoose.Schema({
   details: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+},{
+  strictPopulate: false
 });
+
 
 export const exptypeSchema = new mongoose.Schema({
     exptype: {type: String, required: true},
@@ -34,5 +44,7 @@ export const exptypeSchema = new mongoose.Schema({
     },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
- })
+ },{
+  strictPopulate: false
+})
 
