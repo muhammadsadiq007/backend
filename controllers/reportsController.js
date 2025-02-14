@@ -5,7 +5,7 @@ import clientSchema from "../models/Clients.js";
 import subareaSchema from "../models/SubArea.js";
 import jwt from "jsonwebtoken";
 import salarySchema from "../models/Salary.js";
-import {expenseSchema} from "../models/Expense.js";
+import {expenseSchema ,exptypeSchema} from "../models/Expense.js";
 import logsSchema from "../models/Logs.js"; 
 
 export const monthlyReports = async (req, res) => {
@@ -124,14 +124,17 @@ export const monthlyReports = async (req, res) => {
     })
       .populate("userId", { name: 1 })
       .sort({ netsalary: -1 });
-
+        const ExpenseType = mongoose.model(
+            network_name + "_exptype",
+            exptypeSchema
+          );
     const Expense = mongoose.model(network_name + "_expense", expenseSchema);
     const totalExpense = await Expense.find({
       date: {
         $gte: startDate,
         $lt: endDate,
       },
-    }).sort({ amount: -1 });
+    }).populate({ path: "exptypeId",  model: ExpenseType}).sort({ amount: -1 }); 
 
     const totalCollection = await Collection.aggregate([
       {
@@ -156,6 +159,7 @@ export const monthlyReports = async (req, res) => {
       totalAmount: totalCollection[0]?.totalAmount || 0,
     });
   } catch (error) {
+    console.log(error)
     return res.status(500).json({
       success: false,
       error: "Can't fetcg monthly reports server error",
