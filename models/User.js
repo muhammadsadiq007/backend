@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
     password: {type: String,required:true},
     database : {type: String, default:"No"},
     isActive : {type: String, default:"Yes"},
+    expirytype : {type: String, default:"Monthly", required: true},
     role: {type: String, enum: ["master", "admin", "employee"], required:true},
     permissions: {
         addclient: {type: Number, default: 0},
@@ -14,7 +15,7 @@ const userSchema = new mongoose.Schema({
         changepaydate: {type: Number, default: 0},
         changestatus:{type: Number, default: 0},
         clientlegder:{type: Number, default: 0},
-        clientpayments:{type: Number, default: 0},
+        clientpayments:{type: Number, default: 0}, 
         paymentstatus:{type: Number, default: 0},
         deletepayment:{type: Number, default: 0},
     },

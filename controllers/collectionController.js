@@ -100,6 +100,7 @@ export const statusUnpaid = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
+  const expirytype = decoded.expirytype
   const _id = decoded._id;
   const { id } = req.params;
   
@@ -127,7 +128,12 @@ export const statusUnpaid = async (req, res) => {
     });
     await log.save();
     const today = new Date(rechargedate);
-    const nextMonth = new Date(today.getFullYear(), today.getMonth() - parseInt(monthspaid), 10);
+    let nextMonth
+    if (expirytype === "Monthly") {
+      nextMonth = new Date(today.getFullYear(), today.getMonth() - parseInt(monthspaid), 10);
+    } else {
+      nextMonth = new Date(today.setDate(today.getDate() - 30 * parseInt(monthspaid)));
+    }
     const Client = mongoose.model(network_name + "_client", clientSchema);
     const clientUpdate = await Client.findByIdAndUpdate(
       { _id: clientId },
@@ -152,6 +158,7 @@ export const statusPaid = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
+  const expirytype = decoded.expirytype
   const _id = decoded._id;
   const { id } = req.params;
   const { status, monthly ,balance, clientId, amountpaid ,monthspaid } = req.body;
@@ -185,7 +192,12 @@ export const statusPaid = async (req, res) => {
   });
   await log.save();
     const today = new Date();
-    const nextMonth = new Date(today.getFullYear(), today.getMonth() + parseInt(monthspaid), 10);
+    let nextMonth
+    if (expirytype === "Monthly") {
+      nextMonth = new Date(today.getFullYear(), today.getMonth() - parseInt(monthspaid), 10);
+    } else {
+      nextMonth = new Date(today.setDate(today.getDate() - 30 * parseInt(monthspaid)));
+    }
     const Client = mongoose.model(network_name + "_client", clientSchema);
     const clientUpdate = await Client.findByIdAndUpdate(
       { _id: clientId },
@@ -290,6 +302,7 @@ export const addCollection = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
+  const expirytype = decoded.expirytype;
   const _id = decoded._id;
 
   const { id } = req.params;
@@ -317,7 +330,11 @@ export const addCollection = async (req, res) => {
     const entries = [];
 
     let newExpiryDate
-
+    const Client = mongoose.model(network_name + "_client", clientSchema);
+    const Collection = mongoose.model(
+      network_name + "_collection",
+      collectionSchema
+    );
     // Advance Payments
     if(paytype === "advance") {
     for (let i = 0; i < monthspaid; i++) {
@@ -333,6 +350,18 @@ export const addCollection = async (req, res) => {
       };
       entries.push(entry);
     }
+    if(expirytype === "Variable") {
+      const today = new Date();
+        const user = await Client.findById({_id: id})
+      if (!user.rechargedate || user.rechargedate < today) {
+          // Pehli dafa ya expired ho chuki ho to aaj se 30 din badhao
+          newExpiryDate = new Date(today.setDate(today.getDate() + 30 * parseInt(monthspaid)));
+      } else {
+          // Pehle se expiryDate hai, usi se 30 din badhao
+          newExpiryDate = new Date(user.rechargedate);
+          newExpiryDate.setDate(newExpiryDate.getDate() + 30 * parseInt(monthspaid));
+      }
+    } else {
     const today = new Date(paymentdate);
     newExpiryDate = new Date(
       today.getFullYear(),
@@ -340,7 +369,8 @@ export const addCollection = async (req, res) => {
       10
     );
   }
-
+  }
+  
     //Genrate monthly entries
     if(paytype === "monthly") {
     for (let i = 0; i < monthspaid; i++) {
@@ -348,7 +378,7 @@ export const addCollection = async (req, res) => {
         startDate.getFullYear(),
         startDate.getMonth() + i
       );
-      const entry = {
+      const entry = { 
         month:
           monthDate.toLocaleString("default", { month: "long" }) +
           " " +
@@ -356,25 +386,35 @@ export const addCollection = async (req, res) => {
       };
       entries.push(entry);
     }
+    if(expirytype === "Variable") {
+      const today = new Date();
+        const user = await Client.findById({_id: id})
+      if (!user.rechargedate || user.rechargedate < today) {
+          // Pehli dafa ya expired ho chuki ho to aaj se 30 din badhao
+          newExpiryDate = new Date(today.setDate(today.getDate() + 30 * parseInt(monthspaid)));
+      } else {
+          // Pehle se expiryDate hai, usi se 30 din badhao
+          newExpiryDate = new Date(user.rechargedate);
+          newExpiryDate.setDate(newExpiryDate.getDate() + 30 * parseInt(monthspaid));
+      }
+    } else {
     const today = new Date(paymentdate);
     newExpiryDate = new Date(
       today.getFullYear(),
       today.getMonth() + parseInt(monthspaid),
       10
     );
+  }
     
   }
 
     const payableamount = parseInt(monthly) * parseInt(monthspaid) + parseInt(balance)
     const totalBalance = payableamount - parseInt(amountpaid);
 
-    const Collection = mongoose.model(
-      network_name + "_collection",
-      collectionSchema
-    );
 
 
-    const Client = mongoose.model(network_name + "_client", clientSchema);
+
+
 
     const ifPaid = await Collection.find({
       clientId:id, "entries.month" : {$in : entries.map((e) => e.month)},
@@ -385,6 +425,7 @@ export const addCollection = async (req, res) => {
         error: `${internetid} has already paid this month fees`,
       });
     }
+    console.log(newExpiryDate)
     const newPay = new Collection({
       clientId: id,
       internetid,
@@ -402,7 +443,8 @@ export const addCollection = async (req, res) => {
       balance, // user previous balanace
       entries,
     });
-    await newPay.save();
+    // await newPay.save();
+    console.log(newPay)
     const Logs = mongoose.model(network_name + "_logs", logsSchema); 
   const log = new Logs({
     userId: _id, // Assume karein req.user middleware se aa raha hai
@@ -413,20 +455,21 @@ export const addCollection = async (req, res) => {
     oldstatus: "Unpaid",
     targetId: id, 
   });
-  await log.save();
-    await Client.findByIdAndUpdate(
-      { _id: id },
-      {
-        balance: totalBalance,
-        status: "Active",
-        ispaid: "Paid",
-        rechargedate: new Date(newExpiryDate).setHours(new Date(newExpiryDate).getHours()+5),
-      }
-    );
+  // await log.save();
+  //   await Client.findByIdAndUpdate(
+  //     { _id: id },
+  //     {
+  //       balance: totalBalance,
+  //       status: "Active",
+  //       ispaid: "Paid",
+  //       rechargedate: new Date(newExpiryDate).setHours(new Date(newExpiryDate).getHours()+5),
+  //     }
+  //   );
     return res
       .status(200)
       .json({ success: true, message: `${internetid} Payment Added Successfully` });
   } catch (error) {
+    console.log(error)
     return res.status(500).json({
       success: false,
       error: "Can't Add Client Payment Server Error",

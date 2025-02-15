@@ -54,14 +54,21 @@ export const activateClient = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY); 
   const network_name = decoded.networkname;
+  const expirytype = decoded.expirytype;
   const _id = decoded._id;
 
   const { id } = req.params;
-  const {
-    rechargedate,
-  } = req.body
+
 
 try {
+  let rechargedate
+
+  if(expirytype === "Variable") {
+    const today = new Date();
+    rechargedate = new Date(today.setDate(today.getDate() + 30))
+  } else {
+    rechargedate = req.body
+  }
   const Client = mongoose.model(network_name + "_client", clientSchema);
   const updclient = await Client.findByIdAndUpdate({_id: id},{
     status : "Active",
@@ -224,6 +231,7 @@ export const addClients = async (req, res) => {
       status,
       dayspayment,
       network_name,
+      expirytype,
     } = req.body;
     const Client = mongoose.model(network_name + "_client", clientSchema);
 
@@ -261,11 +269,9 @@ export const addClients = async (req, res) => {
     newstatus: internetid,
     targetId: id._id,
   });
-  console.log(log)
-  await log.save();
-
+// await log.save();
+const entries = [];
     if(dayspayment > 0) {
-
       let today = new Date(); // Aaj ki date
     let currentMonth = today.getMonth(); // Current month index (0-based)
     let currentYear = today.getFullYear(); // Current year
@@ -281,6 +287,24 @@ export const addClients = async (req, res) => {
         let nextMonth = (currentMonth + 1) % 12;
         let nextYear = currentYear + (nextMonth === 0 ? 1 : 0); // Agar next month January ho to year +1
         newExpiryDate = new Date(nextYear, nextMonth, 10);
+    }
+    if(expirytype === "Variable") {
+      newExpiryDate = new Date(today.setDate(today.getDate() + 30));
+      const startDate = new Date(insdate);
+      const monthspaid = 1
+      for (let i = 0; i < monthspaid; i++) {
+        const monthDate = new Date(
+          startDate.getFullYear(),
+          startDate.getMonth() + i
+        );
+        const entry = { 
+          month:
+            monthDate.toLocaleString("default", { month: "long" }) +
+            " " +
+            monthDate.getFullYear(),
+        };
+        entries.push(entry);
+      }
     }
       const Collection = mongoose.model(
         network_name + "_collection",
@@ -301,6 +325,7 @@ export const addClients = async (req, res) => {
         transid,
         paymentmethod,
         paidby,
+        entries,
       });
       await newPay.save();
       const Logs = mongoose.model(network_name + "_logs", logsSchema); 

@@ -9,6 +9,7 @@ export const editNetwork = async (req, res) => {
       net_admin_name,
       net_admin_email,
       net_admin_role,
+      expirytype,
       isActive,
       database,
     } = req.body;
@@ -16,6 +17,7 @@ export const editNetwork = async (req, res) => {
     const updnetwork = await User.findByIdAndUpdate({_id: id},{
       name: net_admin_name,
       networkname: network_name,
+      expirytype,
       email: net_admin_email,
       role: net_admin_role,
       isActive,
@@ -65,6 +67,7 @@ export const addNetwork = async (req, res) => {
     const {
       network_name,
       net_admin_name,
+      expirytype,
       net_admin_password,
       net_admin_email,
       net_admin_role,
@@ -90,6 +93,7 @@ export const addNetwork = async (req, res) => {
 
     const newUser = new User({
       name: net_admin_name,
+      expirytype,
       networkname: network_name,
       password: hashPassword,
       email: net_admin_email,
