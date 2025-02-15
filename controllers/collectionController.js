@@ -443,8 +443,7 @@ export const addCollection = async (req, res) => {
       balance, // user previous balanace
       entries,
     });
-    // await newPay.save();
-    console.log(newPay)
+    await newPay.save();
     const Logs = mongoose.model(network_name + "_logs", logsSchema); 
   const log = new Logs({
     userId: _id, // Assume karein req.user middleware se aa raha hai
@@ -455,16 +454,16 @@ export const addCollection = async (req, res) => {
     oldstatus: "Unpaid",
     targetId: id, 
   });
-  // await log.save();
-  //   await Client.findByIdAndUpdate(
-  //     { _id: id },
-  //     {
-  //       balance: totalBalance,
-  //       status: "Active",
-  //       ispaid: "Paid",
-  //       rechargedate: new Date(newExpiryDate).setHours(new Date(newExpiryDate).getHours()+5),
-  //     }
-  //   );
+  await log.save();
+    await Client.findByIdAndUpdate(
+      { _id: id },
+      {
+        balance: totalBalance,
+        status: "Active",
+        ispaid: "Paid",
+        rechargedate: new Date(newExpiryDate).setHours(new Date(newExpiryDate).getHours()+5),
+      }
+    );
     return res
       .status(200)
       .json({ success: true, message: `${internetid} Payment Added Successfully` });
