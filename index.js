@@ -17,15 +17,16 @@ import paymethodRouter from "./routes/paymentmethod.js"
 import cron from "node-cron"
 import { clientScheduler, unpaidScheduler } from "./controllers/schedulerController.js"
 
-cron.schedule(' 0 6 * * *',() => {
-    clientScheduler() 
-})
-
-cron.schedule(' 0 0 1 * *',() => {
-    unpaidScheduler() 
-})
-// cron.schedule(' * * * * *',() => {
+// cron.schedule(' 0 6 * * *',() => {
 //     clientScheduler() 
+// })
+
+// cron.schedule(' 0 0 1 * *',() => {
+//     unpaidScheduler() 
+// })
+// cron.schedule(' * * * * *',() => {
+//         unpaidScheduler() 
+//         // clientScheduler() 
 // })
 
 

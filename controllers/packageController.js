@@ -20,7 +20,7 @@ export const getPackages = async (req, res) => {
 
 export const addPackage = async (req, res) => {
   try {
-    const { package_name, package_price, network_name } = req.body;
+    const { package_name, package_type, package_price, network_name } = req.body;
     const Package = mongoose.model(network_name + '_packages', packageSchema)
     const pkg = await Package.findOne({ package_name : package_name  });
     if (pkg) {
@@ -31,10 +31,12 @@ export const addPackage = async (req, res) => {
     const newPkg = new Package({
       package_name,
       package_price,
+      package_type,
     });
     await newPkg.save();
     return res.status(200).json({ success: true, package: newPkg });
   } catch (error) {
+    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "add package server error" });
@@ -64,10 +66,11 @@ export const editPackage = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_KEY);
     const network_name = decoded.networkname 
     const Package = mongoose.model(network_name + '_packages', packageSchema)
-    const { package_name, package_price } = req.body;    
+    const { package_name, package_type, package_price } = req.body;    
     const updatePkg = await Package.findByIdAndUpdate({_id: id}, {
       package_name,
-      package_price
+      package_price,
+      package_type,
     });
     return res.status(200).json({ success: true, updatePkg });
   } catch (error) {  
