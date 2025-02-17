@@ -308,7 +308,6 @@ export const addCollection = async (req, res) => {
   const network_name = decoded.networkname;
   const expirytype = decoded.expirytype;
   const _id = decoded._id;
-
   const { id } = req.params;
 
   try {
@@ -495,10 +494,7 @@ export const addAmount = async (req, res) => {
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
   const _id = decoded._id;
-
   const { id } = req.params;
-
-
   try {
     const {
       internetid,
