@@ -284,7 +284,7 @@ export const addClients = async (req, res) => {
       mobilenumber,
       packageId,
       inscharges,
-      insdate: insdate ? insdate : new Date(),
+      insdate,
       balance,
       tvcable,
       tvpackageId,

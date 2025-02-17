@@ -1,11 +1,13 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
-import { addCollection,getCollections,getCollection, getLegder, statusUnpaid, statusPaid, renewClient, delCollection } from "../controllers/collectionController.js";
+import { addCollection,getCollections,getCollection, getLegder, statusUnpaid, statusPaid, renewClient, delCollection, addAmount, otherAmount } from "../controllers/collectionController.js";
 import { permissionCheck } from "../middleware/roleCheck.js";
 
 const   router = express.Router();
  
 router.post("/add/:id", authMiddleware, permissionCheck("clientpayments"), addCollection);
+router.post("/other/:id", authMiddleware, permissionCheck("clientpayments"), otherAmount);
+router.post("/addamount/:id", authMiddleware, permissionCheck("clientpayments"), addAmount);
 router.get("/", authMiddleware, getCollections);
 router.get("/:id", authMiddleware, getCollection);
 // router.get("status/:id", authMiddleware, getStatus);

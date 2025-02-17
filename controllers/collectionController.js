@@ -24,7 +24,11 @@ export const renewClient = async (req, res) => {
     paidby,
     amountpaid, //user actual amount paid
     } = req.body;
-
+    const entries = []
+    const entry = { 
+      month: "Days Amount"
+    };
+    entries.push(entry);
     let today = new Date(); // Aaj ki date
     let currentMonth = today.getMonth(); // Current month index (0-based)
     let currentYear = today.getFullYear(); // Current year
@@ -59,7 +63,7 @@ export const renewClient = async (req, res) => {
       subareaId,
       paidby,
       amountpaid, //how much user paid
-      
+      entries,
     });
    
     await newPay.save();
@@ -314,6 +318,8 @@ export const addCollection = async (req, res) => {
       address,
       packageId,
       monthly, // user actual fees
+      tvmonthly,
+      tvpackage,
       monthspaid,
       paymentmethod,
       paymentdate,
@@ -324,7 +330,7 @@ export const addCollection = async (req, res) => {
       amountpaid, //user actual amount paid
       balance, // user previous balanace
     } = req.body;
-
+    console.log(req.body)
        // Calculate the Start Date
     const startDate = new Date(paymentdate);
     const entries = [];
@@ -406,15 +412,19 @@ export const addCollection = async (req, res) => {
     );
   }
     
-  }
+    }
 
-    const payableamount = parseInt(monthly) * parseInt(monthspaid) + parseInt(balance)
-    const totalBalance = payableamount - parseInt(amountpaid);
+  let tvAmount
+    if(tvmonthly){
+      tvAmount = parseInt(tvmonthly) * parseInt(monthspaid)
+    } else {
+      tvAmount = 0
+    }
 
 
-
-
-
+    const payableamount = parseInt(monthly) * parseInt(monthspaid) + parseInt(balance) + parseInt(tvAmount)
+    const totalBalance = payableamount - parseInt(amountpaid);   
+    
 
     const ifPaid = await Collection.find({
       clientId:id, "entries.month" : {$in : entries.map((e) => e.month)},
@@ -433,10 +443,12 @@ export const addCollection = async (req, res) => {
       address,
       packageId,
       monthly, // user actual fees
+      tvmonthly,
+      tvpackage,
       amountpaid, //how much user paid
       monthspaid, // NO of month 
       paymentmethod,
-      paymentdate: new Date(paymentdate).toLocaleString(), 
+      paymentdate, 
       subareaId,
       transid,
       paidby,
@@ -444,6 +456,7 @@ export const addCollection = async (req, res) => {
       entries,
     });
     await newPay.save();
+    console.log(newPay)
     const Logs = mongoose.model(network_name + "_logs", logsSchema); 
   const log = new Logs({
     userId: _id, // Assume karein req.user middleware se aa raha hai
@@ -461,7 +474,161 @@ export const addCollection = async (req, res) => {
         balance: totalBalance,
         status: "Active",
         ispaid: "Paid",
+        istvpaid: "Paid",
         rechargedate: new Date(newExpiryDate).setHours(new Date(newExpiryDate).getHours()+5),
+      }
+    );
+    return res
+      .status(200)
+      .json({ success: true, message: `${internetid} Payment Added Successfully` });
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      success: false,
+      error: "Can't Add Client Payment Server Error",
+    });
+  }
+};
+
+export const addAmount = async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_KEY);
+  const network_name = decoded.networkname;
+  const _id = decoded._id;
+
+  const { id } = req.params;
+
+
+  try {
+    const {
+      internetid,
+      name,
+      address,
+      paymentdate,
+      subareaId,
+      packageId,
+      balance,
+      remarks,
+      paidby,
+      amountpaid, //user actual amount paid
+    } = req.body;
+    console.log(req.body)
+    const entries = []
+    const entry = { 
+      month: "Other",
+    };
+    entries.push(entry);
+    const Client = mongoose.model(network_name + "_client", clientSchema);
+    const Collection = mongoose.model(
+      network_name + "_collection",
+      collectionSchema
+    );
+    const newPay = new Collection({
+      clientId: id,
+      internetid,
+      name,
+      address,
+      balance,
+      amountpaid, //how much user paid
+      paymentdate, 
+      subareaId,
+      packageId,
+      paidby,
+      remarks,
+      entries,
+    });
+    await newPay.save();
+    const Logs = mongoose.model(network_name + "_logs", logsSchema); 
+  const log = new Logs({
+    userId: _id, // Assume karein req.user middleware se aa raha hai
+    action: req.method, // POST (Add), PUT (Edit), DELETE
+    target: req.baseUrl, // Kis resource ko target kia
+    cmd: "Add Amount",
+    newstatus: parseInt(amountpaid) + parseInt(balance),
+    oldstatus: balance,
+    targetId: id, 
+  });
+  await log.save();
+    await Client.findByIdAndUpdate(
+      { _id: id },
+      {
+        balance: parseInt(amountpaid) + parseInt(balance),
+      }
+    );
+    return res
+      .status(200)
+      .json({ success: true, message: `${internetid} Payment Added Successfully` });
+  } catch (error) {
+
+    console.log(error)
+    return res.status(500).json({
+      success: false,
+      error: "Can't Add Client Payment Server Error",
+    });
+  }
+};
+export const otherAmount = async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_KEY);
+  const network_name = decoded.networkname;
+  const _id = decoded._id;
+  const { id } = req.params;
+  try {
+    const {
+      internetid,
+      name,
+      address,
+      paymentdate,
+      paymentmethod,
+      transid,
+      subareaId,
+      packageId,
+      balance,
+      paidby,
+      amountpaid, //user actual amount paid
+    } = req.body;
+    console.log(req.body)
+    const entries = []
+    const entry = { 
+      month: "Other"
+    };
+    entries.push(entry);
+    const Client = mongoose.model(network_name + "_client", clientSchema);
+    const Collection = mongoose.model(
+      network_name + "_collection",
+      collectionSchema
+    );
+    const newPay = new Collection({
+      clientId: id,
+      internetid,
+      name,
+      address,
+      balance,
+      paymentmethod,
+      transid,
+      amountpaid, //how much user paid
+      paymentdate: new Date(paymentdate).toLocaleString(), 
+      subareaId,
+      packageId,
+      paidby,
+      entries,
+    });
+    await newPay.save();
+    const Logs = mongoose.model(network_name + "_logs", logsSchema); 
+  const log = new Logs({
+    userId: _id, // Assume karein req.user middleware se aa raha hai
+    action: req.method, // POST (Add), PUT (Edit), DELETE
+    target: req.baseUrl, // Kis resource ko target kia
+    cmd: "Other Amount",
+    newstatus: balance,
+    oldstatus: parseInt(balance) - parseInt(amountpaid),
+    targetId: id, 
+  });
+  await log.save();
+    await Client.findByIdAndUpdate(
+      { _id: id },
+      {
+        balance: parseInt(balance) - parseInt(amountpaid),
       }
     );
     return res
