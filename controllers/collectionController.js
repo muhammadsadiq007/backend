@@ -508,9 +508,9 @@ export const addAmount = async (req, res) => {
       subareaId,
       packageId,
       balance,
+      newbalance,
       remarks,
-      paidby,
-      amountpaid, //user actual amount paid
+      paidby, //user actual amount paid
     } = req.body;
     console.log(req.body)
     const entries = []
@@ -528,8 +528,7 @@ export const addAmount = async (req, res) => {
       internetid,
       name,
       address,
-      balance,
-      amountpaid, //how much user paid
+      balance : newbalance,
       paymentdate, 
       subareaId,
       packageId,
@@ -544,7 +543,7 @@ export const addAmount = async (req, res) => {
     action: req.method, // POST (Add), PUT (Edit), DELETE
     target: req.baseUrl, // Kis resource ko target kia
     cmd: "Add Amount",
-    newstatus: parseInt(amountpaid) + parseInt(balance),
+    newstatus: parseInt(newbalance) + parseInt(balance),
     oldstatus: balance,
     targetId: id, 
   });
@@ -552,7 +551,7 @@ export const addAmount = async (req, res) => {
     await Client.findByIdAndUpdate(
       { _id: id },
       {
-        balance: parseInt(amountpaid) + parseInt(balance),
+        balance: parseInt(newbalance) + parseInt(balance),
       }
     );
     return res
