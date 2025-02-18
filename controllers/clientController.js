@@ -41,7 +41,7 @@ export const deactivateClient = async (req, res) => {
     await log.save();
     return res
       .status(200)
-      .json({ success: true, message: `${internetid} has been Deactivated` });
+      .json({ success: true, message: `User has been Deactivated` });
   } catch (error) {
     return res
       .status(500)
@@ -49,34 +49,37 @@ export const deactivateClient = async (req, res) => {
   }
 };
 
-export const activateClient = async (req, res) => {
+export const activateVariableClient = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
-  const expirytype = decoded.expirytype;
-  const _id = decoded._id;
+ const _id = decoded._id;
 
   const { id } = req.params;
 
   try {
-    let rechargedate;
-
-    if (expirytype === "Variable") {
-      const today = new Date();
-      rechargedate = new Date(today.setDate(today.getDate() + 30));
-    } else {
-      rechargedate = req.body;
-    }
     const Client = mongoose.model(network_name + "_client", clientSchema);
+    const today = new Date();
+    let newExpiryDate;
+    const user = await Client.findById({ _id: id });
+    if (!user.rechargedate || user.rechargedate < today) {
+      // Pehli dafa ya expired ho chuki ho to aaj se 30 din badhao
+      newExpiryDate = new Date(today.setDate(today.getDate() + 30));
+    } else {
+      // Pehle se expiryDate hai, usi se 30 din badhao
+      newExpiryDate = new Date(user.rechargedate);
+      newExpiryDate.setDate(newExpiryDate.getDate() + 30);
+    }
     const updclient = await Client.findByIdAndUpdate(
       { _id: id },
       {
         status: "Active",
-        rechargedate: new Date(rechargedate).setHours(
-          new Date(rechargedate).getHours() + 5
+        rechargedate: new Date(newExpiryDate).setHours(
+          new Date(newExpiryDate).getHours() + 5
         ),
       }
     );
+
     if (!updclient) {
       return res
         .status(404)
@@ -97,6 +100,55 @@ export const activateClient = async (req, res) => {
       .status(200)
       .json({ success: true, message: `Client has been Activated` });
   } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Edit Client server error" });
+  }
+};
+
+export const activateMonthlyClient = async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_KEY);
+  const network_name = decoded.networkname;
+  const _id = decoded._id;
+
+  const { id } = req.params;
+
+  try {
+    const Client = mongoose.model(network_name + "_client", clientSchema);
+    const {rechargedate} = req.body;
+    const updclient = await Client.findByIdAndUpdate(
+      { _id: id },
+      {
+        status: "Active",
+        rechargedate: new Date(rechargedate).setHours(
+          new Date(rechargedate).getHours() + 5
+        ),
+      }
+    );
+
+    if (!updclient) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Document Not Found" });
+    }
+    const Logs = mongoose.model(network_name + "_logs", logsSchema);
+    const log = new Logs({
+      userId: _id, // Assume karein req.user middleware se aa raha hai
+      action: req.method, // POST (Add), PUT (Edit), DELETE
+      target: req.baseUrl, // Kis resource ko target kia
+      cmd: "Client Status",
+      newstatus: "Active",
+      oldstatus: "In-Active",
+      targetId: id,
+    });
+    await log.save();
+    return res
+      .status(200)
+      .json({ success: true, message: `Client has been Activated` });
+  } catch (error) {
+    console.log(error);
     return res
       .status(500)
       .json({ success: false, error: "Edit Client server error" });
@@ -219,6 +271,11 @@ export const getClients = async (req, res) => {
         model: Package,
       })
       .populate({
+        path: "tvpackageId",
+        select: "package_name",
+        model: Package,
+      })
+      .populate({
         path: "subareaId",
         select: "subarea",
         model: SubArea,
@@ -265,13 +322,11 @@ export const addClients = async (req, res) => {
 
     const client = await Client.findOne({ internetid: internetid });
     if (client) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          error: `${internetid} Already Exists!`,
-          input: req.body,
-        });
+      return res.status(400).json({
+        success: false,
+        error: `${internetid} Already Exists!`,
+        input: req.body,
+      });
     }
     const newClient = new Client({
       internetid,

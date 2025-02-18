@@ -82,6 +82,9 @@ export const getDashboard = async (req, res) => {
       { $match: { status: "Active" } },
       { $group: { _id:null,  recovery: { $sum: "$monthly" } } },
     ]);
+
+    const totalInActive = await Client.find({ status: "In-Active" }).countDocuments();
+
     const today = new Date()
     const threeDaysLater = new Date()
     threeDaysLater.setDate(today.getDate() + 3)
@@ -158,6 +161,7 @@ export const getDashboard = async (req, res) => {
       recovery: totalRecovery[0]?.recovery || 0,
       packageCount,
       unpaidClients,
+      totalInActive,
       expiringUsers,
       clientsCollection ,
       totalAmount: totalCollection[0]?.totalAmount || 0,

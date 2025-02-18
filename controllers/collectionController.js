@@ -289,7 +289,7 @@ export const getCollections = async (req, res) => {
       collectionSchema
     );
     const Client = mongoose.model(network_name + "_client", clientSchema);
-    const clientsCollection = await Collection.find({
+    const clientsCollection = await Collection.find({"entries.month": { $ne: "Other" }, 
       paymentdate: { $gte: new Date(startDate), $lte: new Date(endDate) },
     })
       .sort({ createdAt: -1 })
