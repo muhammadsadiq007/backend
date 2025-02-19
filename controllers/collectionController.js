@@ -417,11 +417,18 @@ export const addCollection = async (req, res) => {
     if(tvmonthly){
       tvAmount = parseInt(tvmonthly) * parseInt(monthspaid)
     } else {
-      tvAmount = 0
+      tvAmount = "0"
+    }
+
+    let netmonthly
+    if(monthly){
+      netmonthly = parseInt(monthly) * parseInt(monthspaid)
+    } else {
+      netmonthly = "0"
     }
 
 
-    const payableamount = parseInt(monthly) * parseInt(monthspaid) + parseInt(balance) + parseInt(tvAmount)
+    const payableamount = parseInt(netmonthly) * parseInt(monthspaid) + parseInt(balance) + parseInt(tvAmount)
     const totalBalance = payableamount - parseInt(amountpaid);   
     
 
@@ -455,7 +462,7 @@ export const addCollection = async (req, res) => {
       entries,
     });
     await newPay.save();
-    console.log(newPay)
+    // console.log(newPay)
     const Logs = mongoose.model(network_name + "_logs", logsSchema); 
   const log = new Logs({
     userId: _id, // Assume karein req.user middleware se aa raha hai

@@ -22,7 +22,7 @@ const clientSchema = new mongoose.Schema({
   packageId: {
     type: Schema.Types.ObjectId,
     ref: global.network_name + "_package",
-    required: true,
+    default: undefined,
   },
   tvpackageId: {
     type: Schema.Types.ObjectId,
@@ -34,7 +34,7 @@ const clientSchema = new mongoose.Schema({
   phonenumber: { type: Number },
   mobilenumber: { type: Number },
   inscharges: { type: Number, default:0 },
-  monthly: { type: Number, default: 0 },
+  monthly: { type: Number, default: undefined},
   discount: { type: String},
   tvdiscount: { type: String},
   insdate: { type: Date, default: Date.now },

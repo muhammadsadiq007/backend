@@ -102,7 +102,13 @@ export const getDashboard = async (req, res) => {
       },
       {
         $group: {
-          _id: "$packageId",
+          _id: {
+            $cond: {
+              if: { $ifNull: ["$packageId", false] }, // Check if packageId exists
+              then: "$packageId", // Use packageId if it exists
+              else: "$tvpackageId" // Skip or use a default value
+            }
+          },
           clients: {
             $sum: 1,
           },
@@ -167,6 +173,7 @@ export const getDashboard = async (req, res) => {
       totalAmount: totalCollection[0]?.totalAmount || 0,
     });
   } catch (error) {
+    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "Can't get dashboard data server error" });

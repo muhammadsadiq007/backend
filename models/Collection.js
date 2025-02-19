@@ -18,7 +18,7 @@ const collectionSchema = new mongoose.Schema(
     internetid: { type: String, required: true },
     name: { type: String, required: true },
     address: { type: String, required: true },
-    packageId: { type: String, required: true }, 
+    packageId: { type: String, default: undefined},
     subareaId: {
       type: Schema.Types.ObjectId,
       ref: global.network_name + "_subarea",
@@ -26,7 +26,7 @@ const collectionSchema = new mongoose.Schema(
     },
     paidby: { type: String, required: true },
     transid: { type: String },
-    monthly: { type: Number, default: 0 },
+    monthly: { type: Number, default: undefined},
     tvpackage: { type: String, default: undefined},
     remarks: { type: String, default: undefined},
     tvmonthly: { type: Number, default: undefined},
