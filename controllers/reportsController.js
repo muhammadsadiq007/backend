@@ -5,15 +5,15 @@ import clientSchema from "../models/Clients.js";
 import subareaSchema from "../models/SubArea.js";
 import jwt from "jsonwebtoken";
 import salarySchema from "../models/Salary.js";
-import {expenseSchema ,exptypeSchema} from "../models/Expense.js";
-import logsSchema from "../models/Logs.js"; 
+import { expenseSchema, exptypeSchema } from "../models/Expense.js";
+import logsSchema from "../models/Logs.js";
 
 export const monthlyReports = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
 
-  try { 
+  try {
     const { selectMonth } = req.body;
     if (!selectMonth) {
       return res
@@ -28,7 +28,7 @@ export const monthlyReports = async (req, res) => {
 
     const startDate = new Date(year, month, 1);
     const endDate = new Date(year, month + 1, 1);
-   
+
     const Collection = mongoose.model(
       network_name + "_collection",
       collectionSchema
@@ -124,17 +124,19 @@ export const monthlyReports = async (req, res) => {
     })
       .populate("userId", { name: 1 })
       .sort({ netsalary: -1 });
-        const ExpenseType = mongoose.model(
-            network_name + "_exptype",
-            exptypeSchema
-          );
+    const ExpenseType = mongoose.model(
+      network_name + "_exptype",
+      exptypeSchema
+    );
     const Expense = mongoose.model(network_name + "_expense", expenseSchema);
     const totalExpense = await Expense.find({
       date: {
         $gte: startDate,
         $lt: endDate,
       },
-    }).populate({ path: "exptypeId",  model: ExpenseType}).sort({ amount: -1 }); 
+    })
+      .populate({ path: "exptypeId", model: ExpenseType })
+      .sort({ amount: -1 });
 
     const totalCollection = await Collection.aggregate([
       {
@@ -159,7 +161,7 @@ export const monthlyReports = async (req, res) => {
       totalAmount: totalCollection[0]?.totalAmount || 0,
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({
       success: false,
       error: "Can't fetcg monthly reports server error",
@@ -247,19 +249,164 @@ export const collectionReports = async (req, res) => {
 
 export const activityLogs = async (req, res) => {
   const { startDate, endDate, cmdType, network_name } = req.body;
-  const startDates = new Date(`${startDate}T00:00:00.000+05:00`)
-  const endDates = new Date(`${endDate}T23:59:59.999+05:00`)  
+  const startDates = new Date(`${startDate}T00:00:00.000+05:00`);
+  const endDates = new Date(`${endDate}T23:59:59.999+05:00`);
   try {
     const Client = mongoose.model(network_name + "_client", clientSchema);
     const Logs = mongoose.model(network_name + "_logs", logsSchema);
     const activityLogs = await Logs.find({
-     timestamp: { $gte: startDates , $lte: endDates }, cmd : cmdType
+      timestamp: { $gte: startDates, $lte: endDates },
+      cmd: cmdType,
     })
-    .populate("userId", { name: 1 })
-    .populate({ path: "targetId" ,select: 'internetid name', model: Client});
+      .populate("userId", { name: 1 })
+      .populate({ path: "targetId", select: "internetid name", model: Client });
 
     return res.status(200).json({ success: true, activityLogs });
   } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, error: "Somthing Wrong with Server" });
+  }
+};
+
+export const balanceSheet = async (req, res) => {
+  try {
+    const { startDate, endDate, network_name } = req.body;
+
+    const Collection = mongoose.model(
+      network_name + "_collection",
+      collectionSchema
+    );
+    // Step 1: Fetch Collections (Credit)
+    const balanceSheet = await Collection.aggregate([
+      {
+        $match: {
+          paymentdate: { $gte: new Date(startDate), $lt: new Date(endDate) },
+        },
+      },
+      {
+        $group: {
+          _id: "$paymentdate",
+          amount: { $sum: "$amountpaid" },
+          details: { $push: "User Collections" },
+        },
+      },
+      {
+        $addFields: {
+          type: "Credit",
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id",
+          type: 1,
+          amount: 1,
+          details: { $arrayElemAt: ["$details", 0] },
+        },
+      },
+    ]);
+    const Expense = mongoose.model(network_name + "_expense", expenseSchema);
+        const ExpenseType = mongoose.model(
+            network_name + "_exptype",
+            exptypeSchema
+          );
+    // Step 2: Fetch Expenses (Debit)
+    const expenseSheet = await Expense.aggregate([
+      {
+        $match: {
+          date: { $gte: new Date(startDate), $lt: new Date(endDate) },
+        },
+      },
+      {
+        $lookup: {
+          from: network_name + "_exptypes", // Expense types table
+          localField: "exptypeId", // Foreign key in expenses
+          foreignField: "_id", // Primary key in expense_types
+          as: "expenseType",
+        }
+      },
+      {
+        $group: {
+          _id: { date: "$date", type: "$expenseType.exptype" },
+          amounts: { $sum: "$amount" },
+        },
+      },
+      {
+        $addFields: {
+          type: "Debit",
+          details: "$_id.type",
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id.date",
+          type: 1,
+          amounts: 1,
+          details: 1,
+        },
+      },
+    ]);
+
+    // Step 3: Fetch Salary (Debit)
+    const Salary = mongoose.model(network_name + "_salary", salarySchema);
+    const salarySheet = await Salary.aggregate([
+      {
+        $match: {
+          paydate: { $gte: new Date(startDate), $lt: new Date(endDate) },
+        },
+      },
+      {
+        $lookup: {
+          from: "users", // Expense types table
+          localField: "userId", // Foreign key in expenses
+          foreignField: "_id", // Primary key in expense_types
+          as: "employeename",
+        }
+      },
+      {
+        $group: {
+          _id: { date: "$paydate", type: "$employeename.name" },
+          amounts: { $sum: "$netsalary" },
+        },
+      },
+      {
+        $addFields: {
+          type: "Debit",
+          details: "$_id.type",
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id.date",
+          type: 1,
+          amounts: 1,
+          details: 1,
+        },
+      },
+    ]);
+
+    // Step 3: Merge Collections and Expenses
+    let transactions = [...balanceSheet, ...expenseSheet,...salarySheet];
+
+    // Step 4: Sort by Date
+    transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Step 5: Calculate Running Balance
+    let runningBalance = 0;
+    transactions.forEach((entry) => {
+      if (entry.type === "Credit") {
+        runningBalance += entry.amount;
+      } else {
+        runningBalance -= entry.amounts;
+      }
+      entry.balance = runningBalance;
+    });
+    return res.status(200).json({ success: true, transactions });
+  } catch (error) {
+    console.log(error);
     return res
       .status(500)
       .json({ success: false, error: "Somthing Wrong with Server" });

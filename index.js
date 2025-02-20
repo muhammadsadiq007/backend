@@ -15,7 +15,7 @@ import expenseRouter from "./routes/expense.js"
 import reportsRouter from "./routes/reports.js"
 import paymethodRouter from "./routes/paymentmethod.js"
 import cron from "node-cron"
-import { clientScheduler, unpaidScheduler } from "./controllers/schedulerController.js"
+import { clientScheduler, paidScheduler, unpaidScheduler } from "./controllers/schedulerController.js"
 
 // cron.schedule(' 0 6 * * *',() => {
 //     clientScheduler() 
@@ -24,9 +24,10 @@ import { clientScheduler, unpaidScheduler } from "./controllers/schedulerControl
 // cron.schedule(' 0 0 1 * *',() => {
 //     unpaidScheduler() 
 // })
+// Every Minute Scheduler
 // cron.schedule(' * * * * *',() => {
-//         unpaidScheduler() 
-//         // clientScheduler() 
+//         // paidScheduler() 
+//         clientScheduler() 
 // })
 
 

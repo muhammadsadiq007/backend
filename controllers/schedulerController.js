@@ -5,15 +5,15 @@ import collectionSchema from "../models/Collection.js";
 
 export const clientScheduler = async () => {
   try {
-    const user = await User.find({ database: "Yes" }, { networkname: 1 });
+    // const user = await User.find({ database: "Yes" }, { networkname: 1 });
     const today = new Date();
 
-    for (const network of user) {
-      const { networkname } = network;
+    // for (const network of user) {
+    //   const { networkname } = network;
 
-      const dbase = networkname + "_client";
+    //   const dbase = networkname + "_client";
 
-      const Client = mongoose.model(dbase, clientSchema);
+      const Client = mongoose.model("heefa_client", clientSchema);
       const result = await Client.updateMany(
         {
           rechargedate: { $lt: today },
@@ -21,9 +21,12 @@ export const clientScheduler = async () => {
         },
         { $set: { status: "In-Active", ispaid: "Unpaid" } }
       );
-    }
-    console.log(`${result.modifiedCount} clients marked as Unpaid.`)
-  } catch (error) {}
+    // }
+    console.log(`${result.modifiedCount} clients marked as In-Active.`)
+  } catch (error) {
+    console.log(error)
+  }
+
 };
 
 // export const unpaidScheduler = async () => {
@@ -171,5 +174,43 @@ export const unpaidScheduler = async () => {
   }
 };
 
+
+
+
+export const paidScheduler = async () => {
+  try {
+    const currentDate = new Date();
+    const currentMonth =
+      currentDate.toLocaleString("default", { month: "long" }) +
+      " " +
+      currentDate.getFullYear();
+
+      // Get the collection for this network
+      const Collection = mongoose.model(
+        "heefa_collection",
+        collectionSchema
+      );
+
+      // 🔹 Find all clients who have paid for the current month
+      const paidClients = await Collection.find({
+        "entries.month": currentMonth,
+      }).select("clientId");
+
+      // Extract client IDs
+      const paidClientIds = paidClients.map((sub) => sub.clientId);
+
+      // 🔹 Update these clients as "Paid" in net_client
+      const Client = mongoose.model("heefa_client", clientSchema);
+      const updatedClients = await Client.updateMany(
+        { _id: { $in: paidClientIds } },
+        { $set: { ispaid: "Paid" } }
+      );
+
+      console.log(`${updatedClients.modifiedCount} clients marked as Paid.`);
+
+  } catch (error) {
+    console.error("Error updating paid clients:", error);
+  }
+};
 
 

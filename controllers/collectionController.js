@@ -548,7 +548,7 @@ export const addAmount = async (req, res) => {
     cmd: "Add Amount",
     newstatus: parseInt(newbalance) + parseInt(balance),
     oldstatus: balance,
-    targetId: id, 
+    targetId: id,
   });
   await log.save();
     await Client.findByIdAndUpdate(
@@ -592,7 +592,7 @@ export const otherAmount = async (req, res) => {
     console.log(req.body)
     const entries = []
     const entry = { 
-      month: "Other"
+      month: "Balance Receive"
     };
     entries.push(entry);
     const Client = mongoose.model(network_name + "_client", clientSchema);
