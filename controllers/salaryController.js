@@ -98,10 +98,10 @@ export const addSalary = async (req, res) => {
       basicsalary,
       allowances,
       deduction,
-      paydate,
       addedbyId,
       network_name,
-    } = req.body;
+    } = req.body.addSalary;
+    const paydate = req.body.payDate
     const Salary = mongoose.model(network_name + "_salary", salarySchema);
     const totalSalary =
       parseInt(basicsalary) + parseInt(allowances) - parseInt(deduction);

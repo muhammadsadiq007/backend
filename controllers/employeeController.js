@@ -41,8 +41,10 @@ export const getEmployee = async (req, res) => {
   }
 };
 
-
 export const editEmployee = async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_KEY);
+  const expirytype = decoded.expirytype;
   try {
     const { id } = req.params;
     const {
@@ -64,8 +66,9 @@ export const editEmployee = async (req, res) => {
       { _id: employee.userId },
       {
         name: emp_name,
+        expirytype: expirytype,
         password: hashPassword,
-         role: emp_role,
+        role: emp_role,
       }
     );
     const updateEmployee = await Employee.findByIdAndUpdate(
@@ -93,6 +96,9 @@ export const editEmployee = async (req, res) => {
 };
 
 export const addEmployee = async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_KEY);
+  const expirytype = decoded.expirytype;
   try {
     const {
       emp_name,
@@ -108,7 +114,11 @@ export const addEmployee = async (req, res) => {
     if (user) {
       return res
         .status(400)
-        .json({ success: false, error: "Email Address Already Exists!", input:req.body });
+        .json({
+          success: false,
+          error: "Email Address Already Exists!",
+          input: req.body,
+        });
     }
     const hashPassword = crypto
       .createHash("sha256")
@@ -116,6 +126,7 @@ export const addEmployee = async (req, res) => {
       .digest("hex");
     const newUser = new User({
       name: emp_name,
+      expirytype: expirytype,
       email: emp_email,
       password: hashPassword,
       networkname: network_name,

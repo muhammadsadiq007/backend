@@ -301,7 +301,6 @@ export const addClients = async (req, res) => {
       mobilenumber,
       packageId,
       inscharges,
-      insdate,
       balance,
       tvcable,
       tvpackageId,
@@ -317,7 +316,8 @@ export const addClients = async (req, res) => {
       dayspayment,
       network_name,
       expirytype,
-    } = req.body;
+    } = req.body.clientData;
+    const insdate = req.body.insDate
     const Client = mongoose.model(network_name + "_client", clientSchema);
 
     const client = await Client.findOne({ internetid: internetid });

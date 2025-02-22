@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
     password: {type: String,required:true},
     database : {type: String, default:"No"},
     isActive : {type: String, default:"Yes"},
-    expirytype : {type: String, default:"Monthly", required: true},
+    expirytype : {type: String, required: true},
     role: {type: String, enum: ["master", "admin", "employee"], required:true},
     permissions: {
         addclient: {type: Number, default: 0},

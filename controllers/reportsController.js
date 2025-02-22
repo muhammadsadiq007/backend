@@ -250,7 +250,10 @@ export const collectionReports = async (req, res) => {
 export const activityLogs = async (req, res) => {
   const { startDate, endDate, cmdType, network_name } = req.body;
   const startDates = new Date(`${startDate}T00:00:00.000+05:00`);
-  const endDates = new Date(`${endDate}T23:59:59.999+05:00`);
+  const endDates = new Date(`${endDate}T23:59:59.999+09:00`);
+  console.log(req.body)
+  console.log("Start Date" ,startDates, "end Date" ,endDates)
+
   try {
     const Client = mongoose.model(network_name + "_client", clientSchema);
     const Logs = mongoose.model(network_name + "_logs", logsSchema);
@@ -263,6 +266,7 @@ export const activityLogs = async (req, res) => {
 
     return res.status(200).json({ success: true, activityLogs });
   } catch (error) {
+    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "Somthing Wrong with Server" });
@@ -271,8 +275,12 @@ export const activityLogs = async (req, res) => {
 
 export const balanceSheet = async (req, res) => {
   try {
-    const { startDate, endDate, network_name } = req.body;
-
+    
+    const { startDates, endDates, network_name } = req.body;
+    const startDate = new Date(`${startDates}T00:00:00.000+05:00`);
+    const endDate = new Date(`${endDates}T23:59:59.000+00:00`);
+    console.log(req.body)
+    console.log("Start Date" ,startDate, "end Date" ,endDate)
     const Collection = mongoose.model(
       network_name + "_collection",
       collectionSchema

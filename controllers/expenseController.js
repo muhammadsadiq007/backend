@@ -63,7 +63,7 @@ export const getExpType = async (req, res) => {
     const expTypes = await ExpenseType.findById(id);
     return res.status(200).json({ success: true, expTypes });
   } catch (error) {
-    return res
+    return res 
       .status(500)
       .json({ success: false, error: "Fetching Data Server Error" });
   }
@@ -137,8 +137,9 @@ export const getExpHead = async (req, res) => {
 
 export const addExpense = async (req, res) => {
   try {
-    const { exptypeId, date, amount, details, network_name, expenseby } =
-      req.body;
+    const { exptypeId, amount, details, network_name, expenseby } =
+      req.body.addExpenseData;
+      const date = req.body.expenseDate
     const Expense = mongoose.model(network_name + "_expense", expenseSchema);
     const newExp = new Expense({
       exptypeId,
@@ -206,7 +207,8 @@ export const getExpense = async (req, res) => {
       date: { $gte: new Date(startDate), $lte: new Date(endDate) },
     })
       .populate("expensebyId",{name:1})
-      .sort({ cratedate: -1 }).populate({ path: "exptypeId",  model: network_name + "_exptype", populate: { path: "expheadId", model: network_name + "_exphead" }});
+      .populate({ path: "exptypeId",  model: network_name + "_exptype", populate: { path: "expheadId", model: network_name + "_exphead" }})
+      .sort({ cratedate: -1 })
     return res.status(200).json({ success: true, expenseData });
 
   } catch (error) {
