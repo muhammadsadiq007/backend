@@ -118,7 +118,7 @@ export const statusUnpaid = async (req, res) => {
       network_name + "_collection",
       collectionSchema
     );
-    const legder = await Collection.findByIdAndUpdate(
+   await Collection.findByIdAndUpdate(
       { _id: id },
       {
         status: status,
@@ -355,6 +355,7 @@ export const addCollection = async (req, res) => {
     // Calculate the Start Date
     const startDate = new Date(paymentdate);
     const entries = [];
+    
 
     let newExpiryDate;
     const Client = mongoose.model(network_name + "_client", clientSchema);
@@ -486,6 +487,7 @@ export const addCollection = async (req, res) => {
       paymentmethod,
       paymentdate,
       subareaId,
+      status:"Paid",
       transid,
       paidby,
       balance, // user previous balanace
@@ -600,6 +602,57 @@ export const addAmount = async (req, res) => {
       });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({
+      success: false,
+      error: "Can't Add Client Payment Server Error",
+    });
+  }
+};
+
+export const deleteAmount = async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_KEY);
+  const network_name = decoded.networkname;
+  const _id = decoded._id;
+  const { id } = req.params;
+  try {
+    const Client = mongoose.model(network_name + "_client", clientSchema);
+    const Collection = mongoose.model(
+      network_name + "_collection",
+      collectionSchema
+    );
+    const collection = await Collection.findById(id)
+    const clientBalance = await Client.findOne({_id : collection.clientId})
+
+    // console.log(collection.balance - clientBalance.balance)
+    const newBalance = parseInt(clientBalance.balance - parseInt(collection.balance))
+    
+    const Logs = mongoose.model(network_name + "_logs", logsSchema);
+    const log = new Logs({
+      userId: _id, // Assume karein req.user middleware se aa raha hai
+      action: req.method, // POST (Add), PUT (Edit), DELETE
+      target: req.baseUrl, // Kis resource ko target kia
+      cmd: "Delete Amount",
+      newstatus: "Amount Delete",
+      oldstatus: collection.balance,
+      targetId: id,
+    });
+    await log.save();
+    await Client.findByIdAndUpdate(
+      { _id : collection.clientId },
+      {
+        balance: newBalance,
+      }
+    );
+    await Collection.findByIdAndDelete(id)
+
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: `${collection.internetid} Payment Deleted Successfully`,
+      });
+  } catch (error) {
     return res.status(500).json({
       success: false,
       error: "Can't Add Client Payment Server Error",

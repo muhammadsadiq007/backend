@@ -1,6 +1,6 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
-import { addCollection,getCollections,getCollection, getLegder, statusUnpaid, statusPaid, renewClient, delCollection, addAmount, otherAmount } from "../controllers/collectionController.js";
+import { addCollection,getCollections,getCollection, getLegder, statusUnpaid, statusPaid, renewClient, delCollection, addAmount, otherAmount, deleteAmount } from "../controllers/collectionController.js";
 import { permissionCheck } from "../middleware/roleCheck.js";
 
 const   router = express.Router();
@@ -16,6 +16,7 @@ router.patch("/paid/:id", authMiddleware, permissionCheck("paymentstatus"), stat
 router.get("/legder/:id", authMiddleware, permissionCheck("clientlegder"), getLegder);
 router.post("/renew/:id", authMiddleware, permissionCheck("clientpayments"), renewClient);
 router.delete("/delete/:id", authMiddleware, permissionCheck("deletepayment"), delCollection);
+router.delete("/deleteamount/:id", authMiddleware, permissionCheck("deletepayment"), deleteAmount);
 
 
 export default router;

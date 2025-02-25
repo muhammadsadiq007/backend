@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema({
     },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
+    userId: { type: Schema.Types.ObjectId, ref: "user", default: "System"},
 })
 
 const User = mongoose.model("user" , userSchema)

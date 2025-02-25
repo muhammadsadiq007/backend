@@ -9,17 +9,25 @@ const Network = (req) => {
 };
 
 const billingSchema = new mongoose.Schema({
-        clientId: {
-          type: Schema.Types.ObjectId,
-          ref: global.network_name + "_client",
-          required: true,
-        }, 
-        entries: [
-            {
-              month: {type : String},
-              _id: false,
-            },
-          ],
-    status: { type: String, enum: ["Paid", "Unpaid"], default: "Unpaud" },
-    balance: { type: Number, default: 0 }, // Outstanding balance if unpaid
-  });
+  clientId: {
+    type: Schema.Types.ObjectId,
+    ref: global.network_name + "_client",
+    required: true,
+  },
+  userId: { type: Schema.Types.ObjectId, ref: "user", required: true },
+  entries: [
+    {
+      month: { type: String },
+      _id: false,
+    },
+  ],
+  status: {
+    type: String,
+    enum: ["Pending", "Paid", "Unpaid"],
+    default: "Pending",
+  },
+  balance: { type: Number, default: 0 }, // Outstanding balance if unpaid
+  createdAt: { type: Date, default: Date.now },
+});
+
+export default billingSchema;

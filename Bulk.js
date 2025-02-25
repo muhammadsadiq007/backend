@@ -1,6 +1,7 @@
 import connectToDatabase from "./db/db.js";
 import clientSchema from "./models/Clients.js";
 import mongoose, { Schema, Types } from "mongoose";
+import collectionSchema from "./models/Collection.js";
 
 const userRegister = async () => {
   connectToDatabase();
@@ -14,15 +15,16 @@ const userRegister = async () => {
       10
     ).toLocaleDateString();
 
-    const Client = mongoose.model("heefa_client", clientSchema);
-    const result = await Client.updateMany({
-      rechargedate: nextMonth,
-      balance: 0,
-      ispaid: "Unpaid",
-      status: "In-Active",
+    // const Client = mongoose.model("heefa_client", clientSchema);
+    const Collection = mongoose.model(
+      "heefa_collection",
+      collectionSchema
+    );
+    const result = await Collection.deleteMany({
+      "entries.month": "January 2025"
     });
 
-    console.log(`Client: ${result.modifiedCount} Recharged Date Updated `);
+    console.log(`Client: ${result.modifiedCount} Has been deleted `);
   } catch (error) {
     console.log(error);
   }

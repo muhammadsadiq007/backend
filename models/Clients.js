@@ -42,7 +42,7 @@ const clientSchema = new mongoose.Schema({
   status: { type: String, default: "Active" },
   ispaid: { type: String, default: "Unpaid" },
   istvpaid: { type: String, default: undefined },
-  tvcable: { type: String, default: undefined},
+  tvcable: { type: String, default: "Internet"},
   tvmonthly: { type: Number, default: undefined},
   balance: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },

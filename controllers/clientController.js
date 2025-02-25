@@ -112,12 +112,11 @@ export const activateMonthlyClient = async (req, res) => {
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
   const _id = decoded._id;
-
   const { id } = req.params;
+  const rechargedate = req.body;
 
   try {
     const Client = mongoose.model(network_name + "_client", clientSchema);
-    const {rechargedate} = req.body;
     const updclient = await Client.findByIdAndUpdate(
       { _id: id },
       {
