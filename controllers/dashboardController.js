@@ -114,18 +114,28 @@ export const getDashboard = async (req, res) => {
         },
       },
       {
+        $project: {
+          packageIds: {
+            $setUnion: [
+              [{ $ifNull: ["$packageId", "$$REMOVE"] }],
+              [{ $ifNull: ["$tvpackageId", "$$REMOVE"] }]
+            ]
+          }
+        }
+      },
+      {
+        $unwind: "$packageIds"
+      },
+      {
+        $match: {
+          packageIds: { $ne: null } // ✅ Remove NULL or empty values
+        }
+      },
+      {
         $group: {
-          _id: {
-            $cond: {
-              if: { $ifNull: ["$packageId", false] }, // Check if packageId exists
-              then: "$packageId", // Use packageId if it exists
-              else: "$tvpackageId", // Skip or use a default value
-            },
-          },
-          clients: {
-            $sum: 1,
-          },
-        },
+          _id: "$packageIds", // ✅ Now `_id` is single value
+          clients: { $sum: 1 }
+        }
       },
       {
         $lookup: {
