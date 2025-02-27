@@ -23,7 +23,7 @@ export const renewClient = async (req, res) => {
       paidby,
       amountpaid, //user actual amount paid
     } = req.body.collectionData;
-    const paymentdate = req.body.paymentDate
+    const paymentdate = req.body.paymentDate;
     const entries = [];
     const entry = {
       month: "Days Amount",
@@ -89,12 +89,10 @@ export const renewClient = async (req, res) => {
         ),
       }
     );
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: `${internetid} Payment Added Successfully`,
-      });
+    return res.status(200).json({
+      success: true,
+      message: `${internetid} Payment Added Successfully`,
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -118,7 +116,7 @@ export const statusUnpaid = async (req, res) => {
       network_name + "_collection",
       collectionSchema
     );
-   await Collection.findByIdAndUpdate(
+    await Collection.findByIdAndUpdate(
       { _id: id },
       {
         status: status,
@@ -355,7 +353,6 @@ export const addCollection = async (req, res) => {
     // Calculate the Start Date
     const startDate = new Date(paymentdate);
     const entries = [];
-    
 
     let newExpiryDate;
     const Client = mongoose.model(network_name + "_client", clientSchema);
@@ -461,7 +458,7 @@ export const addCollection = async (req, res) => {
       parseInt(netmonthly) * parseInt(monthspaid) +
       parseInt(balance) +
       parseInt(tvAmount);
-    const totalBalance = payableamount - parseInt(amountpaid);
+    const totalBalance = payableamount - parseInt(amountpaid)
 
     const ifPaid = await Collection.find({
       clientId: id,
@@ -487,7 +484,7 @@ export const addCollection = async (req, res) => {
       paymentmethod,
       paymentdate,
       subareaId,
-      status:"Paid",
+      status: "Paid",
       transid,
       paidby,
       balance, // user previous balanace
@@ -518,13 +515,11 @@ export const addCollection = async (req, res) => {
         ),
       }
     );
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: `${internetid} Payment Added Successfully`,
-        id,
-      });
+    return res.status(200).json({
+      success: true,
+      message: `${internetid} Payment Added Successfully`,
+      id,
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -594,12 +589,10 @@ export const addAmount = async (req, res) => {
         balance: parseInt(newbalance) + parseInt(balance),
       }
     );
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: `${internetid} Payment Added Successfully`,
-      });
+    return res.status(200).json({
+      success: true,
+      message: `${internetid} Payment Added Successfully`,
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -621,12 +614,14 @@ export const deleteAmount = async (req, res) => {
       network_name + "_collection",
       collectionSchema
     );
-    const collection = await Collection.findById(id)
-    const clientBalance = await Client.findOne({_id : collection.clientId})
+    const collection = await Collection.findById(id);
+    const clientBalance = await Client.findOne({ _id: collection.clientId });
 
     // console.log(collection.balance - clientBalance.balance)
-    const newBalance = parseInt(clientBalance.balance - parseInt(collection.balance))
-    
+    const newBalance = parseInt(
+      clientBalance.balance - parseInt(collection.balance)
+    );
+
     const Logs = mongoose.model(network_name + "_logs", logsSchema);
     const log = new Logs({
       userId: _id, // Assume karein req.user middleware se aa raha hai
@@ -639,19 +634,17 @@ export const deleteAmount = async (req, res) => {
     });
     await log.save();
     await Client.findByIdAndUpdate(
-      { _id : collection.clientId },
+      { _id: collection.clientId },
       {
         balance: newBalance,
       }
     );
-    await Collection.findByIdAndDelete(id)
+    await Collection.findByIdAndDelete(id);
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: `${collection.internetid} Payment Deleted Successfully`,
-      });
+    return res.status(200).json({
+      success: true,
+      message: `${collection.internetid} Payment Deleted Successfully`,
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -723,12 +716,10 @@ export const otherAmount = async (req, res) => {
         balance: parseInt(balance) - parseInt(amountpaid),
       }
     );
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: `${internetid} Payment Added Successfully`,
-      });
+    return res.status(200).json({
+      success: true,
+      message: `${internetid} Payment Added Successfully`,
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({

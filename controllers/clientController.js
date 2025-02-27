@@ -113,8 +113,8 @@ export const activateMonthlyClient = async (req, res) => {
   const network_name = decoded.networkname;
   const _id = decoded._id;
   const { id } = req.params;
-  const rechargedate = req.body;
-
+  const {rechargedate} = req.body.clientData; 
+  
   try {
     const Client = mongoose.model(network_name + "_client", clientSchema);
     const updclient = await Client.findByIdAndUpdate(
