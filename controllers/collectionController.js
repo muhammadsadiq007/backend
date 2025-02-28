@@ -61,6 +61,7 @@ export const renewClient = async (req, res) => {
       paymentmethod,
       paymentdate: new Date(paymentdate),
       subareaId,
+      status : "Paid",
       paidby,
       amountpaid, //how much user paid
       entries,
@@ -250,11 +251,9 @@ export const getLegder = async (req, res) => {
       network_name + "_collection",
       collectionSchema
     );
-    const SubArea = mongoose.model(network_name + "_subarea", subareaSchema);
-    const Client = mongoose.model(network_name + "_client", clientSchema);
     const legder = await Collection.find({ clientId: id })
       .populate({ path: "subareaId", model: network_name + "_subarea" })
-      .populate({ path: "clientId", model: network_name + "_client" });
+      .populate({ path: "clientId", model: network_name + "_client" }).sort({ createdAt: -1 });
     return res.status(200).json({ success: true, legder });
   } catch (error) {
     return res
@@ -300,10 +299,9 @@ export const getCollections = async (req, res) => {
       `T23:59:59.999${timeZoneOffset}`;
 
     // Last day of the month at 23:59:59.999
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate() + 1);
     const endDate =
       endOfMonth.toISOString().split("T")[0] + `T23:59:59.999${timeZoneOffset}`;
-
     const Collection = mongoose.model(
       network_name + "_collection",
       collectionSchema
@@ -324,6 +322,170 @@ export const getCollections = async (req, res) => {
 };
 
 export const addCollection = async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_KEY);
+  const network_name = decoded.networkname;
+  const expirytype = decoded.expirytype;
+  const _id = decoded._id;
+  const { id } = req.params;
+
+  try {
+    const {
+      internetid,
+      name,
+      address,
+      packageId,
+      monthly, // user actual fees
+      tvmonthly,
+      tvpackage,
+      monthspaid,
+      paymentmethod,
+      paytype,
+      subareaId,
+      transid,
+      paidby,
+      amountpaid, //user actual amount paid
+      balance, // user previous balanace
+    } = req.body.collectionData;
+    const paymentdate = req.body.paymentDate;
+    // Calculate the Start Date
+    const startDate = new Date(paymentdate);
+    const entries = [];
+
+    let newExpiryDate;
+    const Client = mongoose.model(network_name + "_client", clientSchema);
+    const Collection = mongoose.model(
+      network_name + "_collection",
+      collectionSchema
+    );
+    //Genrate monthly entries
+      for (let i = 0; i < monthspaid; i++) {
+        const monthDate = new Date(
+          startDate.getFullYear(),
+          startDate.getMonth() + i
+        );
+        const entry = {
+          month:
+            monthDate.toLocaleString("default", { month: "long" }) +
+            " " +
+            monthDate.getFullYear(),
+        };
+        entries.push(entry);
+      }
+      if (expirytype === "Variable") {
+        const today = new Date();
+        const user = await Client.findById({ _id: id });
+        if (!user.rechargedate || user.rechargedate < today) {
+          // Pehli dafa ya expired ho chuki ho to aaj se 30 din badhao
+          newExpiryDate = new Date(
+            today.setDate(today.getDate() + 30 * parseInt(monthspaid))
+          );
+        } else {
+          // Pehle se expiryDate hai, usi se 30 din badhao
+          newExpiryDate = new Date(user.rechargedate);
+          newExpiryDate.setDate(
+            newExpiryDate.getDate() + 30 * parseInt(monthspaid)
+          );
+        }
+      } else {
+        const today = new Date(paymentdate);
+        newExpiryDate = new Date(
+          today.getFullYear(),
+          today.getMonth() + parseInt(monthspaid),
+          10
+        );
+      }
+
+    let tvAmount;
+    if (tvmonthly) {
+      tvAmount = parseInt(tvmonthly) * parseInt(monthspaid);
+    } else {
+      tvAmount = "0";
+    }
+
+    let netmonthly;
+    if (monthly) {
+      netmonthly = parseInt(monthly) * parseInt(monthspaid);
+    } else {
+      netmonthly = "0";
+    }
+
+    const payableamount =
+      parseInt(netmonthly) * parseInt(monthspaid) +
+      parseInt(balance) +
+      parseInt(tvAmount);
+    const totalBalance = payableamount - parseInt(amountpaid)
+
+    const ifPaid = await Collection.find({
+      clientId: id,
+      "entries.month": { $in: entries.map((e) => e.month) },
+    }).countDocuments();
+    if (ifPaid) {
+      return res.status(500).json({
+        success: false,
+        error: `${internetid} has already paid this month fees`,
+      });
+    }
+    const newPay = new Collection({
+      clientId: id,
+      internetid,
+      name,
+      address,
+      packageId,
+      monthly, // user actual fees
+      tvmonthly,
+      tvpackage,
+      amountpaid, //how much user paid
+      monthspaid, // NO of month
+      paymentmethod,
+      paymentdate,
+      subareaId,
+      status: "Paid",
+      transid,
+      paidby,
+      balance, // user previous balanace
+      entries,
+    });
+    await newPay.save();
+    const Logs = mongoose.model(network_name + "_logs", logsSchema);
+    const log = new Logs({
+      userId: _id, // Assume karein req.user middleware se aa raha hai
+      action: req.method, // POST (Add), PUT (Edit), DELETE
+      target: req.baseUrl, // Kis resource ko target kia
+      cmd: "Payment",
+      newstatus: "Paid",
+      oldstatus: "Unpaid",
+      targetId: id,
+    });
+    await log.save();
+
+    const clientUpdate = await Client.findByIdAndUpdate(
+      { _id: id },
+      {
+        balance: totalBalance,
+        status: "Active",
+        ispaid: "Paid",
+        istvpaid: "Paid",
+        rechargedate: new Date(newExpiryDate).setHours(
+          new Date(newExpiryDate).getHours() + 5
+        ),
+      }
+    );
+    return res.status(200).json({
+      success: true,
+      message: `${internetid} Payment Added Successfully`,
+      id,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      error: "Can't Add Client Payment Server Error",
+    });
+  }
+};
+
+export const addAdvance = async (req, res) => {
   const token = req.headers.authorization.split(" ")[1];
   const decoded = jwt.verify(token, process.env.JWT_KEY);
   const network_name = decoded.networkname;
@@ -395,46 +557,6 @@ export const addCollection = async (req, res) => {
         newExpiryDate = new Date(
           today.getFullYear(),
           today.getMonth() + parseInt(monthspaid) + 1,
-          10
-        );
-      }
-    }
-
-    //Genrate monthly entries
-    if (paytype === "monthly") {
-      for (let i = 0; i < monthspaid; i++) {
-        const monthDate = new Date(
-          startDate.getFullYear(),
-          startDate.getMonth() + i
-        );
-        const entry = {
-          month:
-            monthDate.toLocaleString("default", { month: "long" }) +
-            " " +
-            monthDate.getFullYear(),
-        };
-        entries.push(entry);
-      }
-      if (expirytype === "Variable") {
-        const today = new Date();
-        const user = await Client.findById({ _id: id });
-        if (!user.rechargedate || user.rechargedate < today) {
-          // Pehli dafa ya expired ho chuki ho to aaj se 30 din badhao
-          newExpiryDate = new Date(
-            today.setDate(today.getDate() + 30 * parseInt(monthspaid))
-          );
-        } else {
-          // Pehle se expiryDate hai, usi se 30 din badhao
-          newExpiryDate = new Date(user.rechargedate);
-          newExpiryDate.setDate(
-            newExpiryDate.getDate() + 30 * parseInt(monthspaid)
-          );
-        }
-      } else {
-        const today = new Date(paymentdate);
-        newExpiryDate = new Date(
-          today.getFullYear(),
-          today.getMonth() + parseInt(monthspaid),
           10
         );
       }
@@ -617,7 +739,6 @@ export const deleteAmount = async (req, res) => {
     const collection = await Collection.findById(id);
     const clientBalance = await Client.findOne({ _id: collection.clientId });
 
-    // console.log(collection.balance - clientBalance.balance)
     const newBalance = parseInt(
       clientBalance.balance - parseInt(collection.balance)
     );
@@ -664,15 +785,16 @@ export const otherAmount = async (req, res) => {
       internetid,
       name,
       address,
-      paymentdate,
       paymentmethod,
       transid,
       subareaId,
       packageId,
+      tvpackage,
       balance,
       paidby,
       amountpaid, //user actual amount paid
-    } = req.body;
+    } = req.body.collectionData;
+    const paymentdate = req.body.paymentDate;
     const entries = [];
     const entry = {
       month: "Balance Receive",
@@ -694,6 +816,8 @@ export const otherAmount = async (req, res) => {
       amountpaid, //how much user paid
       paymentdate: new Date(paymentdate).toLocaleString(),
       subareaId,
+      status:"Paid",
+      tvpackage,
       packageId,
       paidby,
       entries,
@@ -705,7 +829,7 @@ export const otherAmount = async (req, res) => {
       action: req.method, // POST (Add), PUT (Edit), DELETE
       target: req.baseUrl, // Kis resource ko target kia
       cmd: "Other Amount",
-      newstatus: balance,
+      newstatus: parseInt(balance),
       oldstatus: parseInt(balance) - parseInt(amountpaid),
       targetId: id,
     });

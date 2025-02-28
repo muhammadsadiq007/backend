@@ -114,9 +114,25 @@ export const activateMonthlyClient = async (req, res) => {
   const _id = decoded._id;
   const { id } = req.params;
   const {rechargedate} = req.body.clientData; 
-  
+  const currentDate = new Date();
+  const currentMonth =
+    currentDate.toLocaleString("default", { month: "long" }) +
+    " " +
+    currentDate.getFullYear();
   try {
+
     const Client = mongoose.model(network_name + "_client", clientSchema);
+    const Collection = mongoose.model(network_name + "_collection", collectionSchema);
+    let clientBill = await Collection.findOneAndUpdate({
+      clientId: id,
+      "entries.month": currentMonth,
+      monthly: { $gt: 0 },
+    },
+    {
+      status : "Unpaid"
+    }
+  )
+
     const updclient = await Client.findByIdAndUpdate(
       { _id: id },
       {

@@ -16,7 +16,6 @@ import reportsRouter from "./routes/reports.js"
 import paymethodRouter from "./routes/paymentmethod.js"
 import billingRouter from "./routes/billing.js"
 import cron from "node-cron"
-import { clientScheduler, paidScheduler, unpaidScheduler } from "./controllers/schedulerController.js"
 
 // cron.schedule(' 0 6 * * *',() => {
 //     clientScheduler() 

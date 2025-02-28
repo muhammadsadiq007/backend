@@ -3,30 +3,30 @@ import mongoose, { Schema } from "mongoose";
 import User from "../models/User.js";
 import collectionSchema from "../models/Collection.js";
 
-export const clientScheduler = async () => {
+export const inActiveOnExpiry = async () => {
   try {
-    // const user = await User.find({ database: "Yes" }, { networkname: 1 });
+    const user = await User.find({ database: "Yes" }, { networkname: 1 });
     const today = new Date();
 
-    // for (const network of user) {
-    //   const { networkname } = network;
+    for (const network of user) {
+      const { networkname } = network;
 
-    //   const dbase = networkname + "_client";
+      const dbase = networkname + "_client";
 
-      const Client = mongoose.model("heefa_client", clientSchema);
+      const Client = mongoose.model(dbase, clientSchema);
       const result = await Client.updateMany(
         {
           rechargedate: { $lt: today },
           status: "Active",
+          tvmonthly: { $gt: 0 },
         },
-        { $set: { status: "In-Active", ispaid: "Unpaid" } }
+        { $set: { status: "In-Active" } }
       );
-    // }
-    console.log(`${result.modifiedCount} clients marked as In-Active.`)
+    }
+    console.log(`${result.modifiedCount} clients marked as In-Active.`);
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-
 };
 
 // export const unpaidScheduler = async () => {
@@ -128,7 +128,10 @@ export const unpaidScheduler = async () => {
       // 🔹 Find unpaid clients (either missing current month OR empty entries)
       const unpaidClients = await Collection.find({
         $or: [
-          { clientId: { $in: clientIds }, "entries.month": { $ne: currentMonth } }, // Paid last month but not this month
+          {
+            clientId: { $in: clientIds },
+            "entries.month": { $ne: currentMonth },
+          }, // Paid last month but not this month
           { entries: { $size: 0 } }, // No entries at all
         ],
       }).select("clientId");
@@ -174,9 +177,6 @@ export const unpaidScheduler = async () => {
   }
 };
 
-
-
-
 export const paidScheduler = async () => {
   try {
     const currentDate = new Date();
@@ -185,32 +185,26 @@ export const paidScheduler = async () => {
       " " +
       currentDate.getFullYear();
 
-      // Get the collection for this network
-      const Collection = mongoose.model(
-        "heefa_collection",
-        collectionSchema
-      );
+    // Get the collection for this network
+    const Collection = mongoose.model("heefa_collection", collectionSchema);
 
-      // 🔹 Find all clients who have paid for the current month
-      const paidClients = await Collection.find({
-        "entries.month": currentMonth,
-      }).select("clientId");
+    // 🔹 Find all clients who have paid for the current month
+    const paidClients = await Collection.find({
+      "entries.month": currentMonth,
+    }).select("clientId");
 
-      // Extract client IDs
-      const paidClientIds = paidClients.map((sub) => sub.clientId);
+    // Extract client IDs
+    const paidClientIds = paidClients.map((sub) => sub.clientId);
 
-      // 🔹 Update these clients as "Paid" in net_client
-      const Client = mongoose.model("heefa_client", clientSchema);
-      const updatedClients = await Client.updateMany(
-        { _id: { $in: paidClientIds } },
-        { $set: { ispaid: "Paid" } }
-      );
+    // 🔹 Update these clients as "Paid" in net_client
+    const Client = mongoose.model("heefa_client", clientSchema);
+    const updatedClients = await Client.updateMany(
+      { _id: { $in: paidClientIds } },
+      { $set: { ispaid: "Paid" } }
+    );
 
-      console.log(`${updatedClients.modifiedCount} clients marked as Paid.`);
-
+    console.log(`${updatedClients.modifiedCount} clients marked as Paid.`);
   } catch (error) {
     console.error("Error updating paid clients:", error);
   }
 };
-
-

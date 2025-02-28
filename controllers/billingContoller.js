@@ -52,7 +52,7 @@ export const generateMonthlyBills = async (req, res) => {
           "entries.month": previousMonth,
           monthly: { $gt: 0 },
         })
-          let newBalance = previousBill && previousBill.status === "Unpaid" ? client?.monthly + client?.tvmonthly : 0;
+          let newBalance = previousBill && previousBill.status === "Unpaid" ? client?.monthly : 0;
     
     
         // If no previous bill, generate only the current month bill
@@ -69,8 +69,8 @@ export const generateMonthlyBills = async (req, res) => {
           entries,
           userId,
         });
-
-        console.log(`First-time bill created for ${newBill}}`);
+        await newBill.save();
+        // console.log(`First-time bill created for ${newBill}}`);
       }
     }
 
@@ -150,7 +150,7 @@ export const tvMonthlyBills = async (req, res) => {
           userId,
         });
 
-        console.log(`First-time bill created for ${newBill}}`);
+        // console.log(`First-time bill created for ${newBill}}`);
       }
     }
 
@@ -180,7 +180,7 @@ export const getBillingSummary = async (req, res) => {
       { $unwind: "$entries" }, // Har month ko separate row bana do
       {
         $match: {
-          "entries.month": { $not: /^Days Amount$|^Other$/i }, // ❌ Exclude "Days Amount" & "Other"
+          "entries.month": { $not: /^Days Amount$|^Other$|^Balance Receive$/i }, // ❌ Exclude "Days Amount" & "Other"
         },
       },
       {

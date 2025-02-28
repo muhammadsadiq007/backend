@@ -279,8 +279,6 @@ export const balanceSheet = async (req, res) => {
     const { startDates, endDates, network_name } = req.body;
     const startDate = new Date(`${startDates}T00:00:00.000+05:00`);
     const endDate = new Date(`${endDates}T23:59:59.000+00:00`);
-    console.log(req.body)
-    console.log("Start Date" ,startDate, "end Date" ,endDate)
     const Collection = mongoose.model(
       network_name + "_collection",
       collectionSchema

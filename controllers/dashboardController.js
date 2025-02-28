@@ -173,7 +173,7 @@ export const getDashboard = async (req, res) => {
       network_name + "_collection",
       collectionSchema
     );
-    const clientsCollection = await Payments.find()
+    const clientsCollection = await Payments.find({status:"Paid"})
       .populate("paidby")
       .limit(10)
       .sort({ createdAt: -1 });
