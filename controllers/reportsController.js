@@ -230,8 +230,10 @@ export const clientbBadDebt = async (req, res) => {
 };
 
 export const collectionReports = async (req, res) => {
-  const { startDate, endDate, network_name } = req.body;
-  try {
+  const { startDates, endDates, network_name } = req.body;
+  const startDate = new Date(`${startDates}T00:00:00.000+05:00`);
+  const endDate = new Date(`${endDates}T23:59:59.000+05:00`);
+   try {
     const Collection = mongoose.model(
       network_name + "_collection",
       collectionSchema
@@ -241,6 +243,7 @@ export const collectionReports = async (req, res) => {
     });
     return res.status(200).json({ success: true, collectionReports });
   } catch (error) {
+    console.log(error)
     return res
       .status(500)
       .json({ success: false, error: "Somthing Wrong with Server" });
